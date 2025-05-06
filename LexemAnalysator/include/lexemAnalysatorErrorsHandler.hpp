@@ -1,0 +1,18 @@
+#ifndef LEXEM_ANALYSATOR_INCLUDE_ERRORS_HANDLER_ERRORS_HPP
+#define LEXEM_ANALYSATOR_INCLUDE_ERRORS_HANDLER_ERRORS_HPP
+
+#include "../../common/include/errorsHandlerDefines.hpp"
+
+#define ERROR_UNPACK(errName, errCode, errMessage) \
+    LEXEM_ANALYSATOR_##errName = errCode,
+
+enum LexemAnalisatorErrors {
+    LEXEM_ANALYSATOR_STATUS_OK             = 0,
+    #include "errorsPlainText.in"
+};
+
+#undef ERROR_UNPACK
+
+const char* getLexemAnalisatorErrorMessage(LexemAnalisatorErrors error);
+
+#endif
