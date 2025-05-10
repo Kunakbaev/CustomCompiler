@@ -6,13 +6,13 @@
 #define ERROR_UNPACK(errName, errCode, errMessage) \
     LEXEM_ANALYSATOR_##errName = errCode,
 
-enum LexemAnalisatorErrors {
+enum LexemAnalysatorErrors {
     LEXEM_ANALYSATOR_STATUS_OK             = 0,
     #include "errorsPlainText.in"
 };
 
 #undef ERROR_UNPACK
 
-const char* getLexemAnalisatorErrorMessage(LexemAnalisatorErrors error);
+const char* getLexemAnalysatorErrorMessage(LexemAnalysatorErrors error);
 
 #endif

@@ -44,7 +44,7 @@ SemanticCheckerErrors  semanticCheckOfSyntaxTree(SemanticChecker* checker);
 SemanticCheckerErrors buildTableOfIdentificators(SemanticChecker* checker);
 SemanticCheckerErrors recursiveFindTinTout(
     SemanticChecker* checker,
-    size_t curNodeInd
+    size_t           curNodeInd
 );
 SemanticCheckerErrors getIdentificatorByLexem(
     const SemanticChecker* checker,

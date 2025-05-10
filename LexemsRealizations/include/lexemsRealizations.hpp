@@ -26,7 +26,7 @@ enum Lexems {
 
 struct Lexem {
     LexemType   type;
-    char* strRepr; // str repr can be get from data (var index, or operator index or keyword index), so we would just have table with names and addition getter funcs
+    char*       strRepr; // str repr can be get from data (var index, or operator index or keyword index), so we would just have table with names and addition getter funcs
     // general lexem identificator or number (const)
     union {
         Lexems   lexemSpecificName;
@@ -37,7 +37,7 @@ struct Lexem {
 #undef GENERAL_LEXEM_DEF
 
 #define GENERAL_LEXEM_DEF(lexemType, specName, repr) \
-    const Lexem SAMPLE_##specName##_NODE = {.type=lexemType, .strRepr = repr, {.lexemSpecificName = specName}};
+    const Lexem SAMPLE_##specName##_NODE = {.type=lexemType, .strRepr = (char*)repr, {.lexemSpecificName = specName}};
 
 #include "../include/codeGen/allLexems.hpp"
 

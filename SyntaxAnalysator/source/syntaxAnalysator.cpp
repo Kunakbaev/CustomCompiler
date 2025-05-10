@@ -31,10 +31,10 @@ SyntaxAnalysatorErrors constructSyntaxAnalysator(
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
 
-size_t getNumOfLines(FILE* file) {
+static size_t getNumOfLines(FILE* file) {
     assert(file != NULL);
 
-    size_t ch = '?';
+    int ch = '?';
     size_t numOfLines = 0;
     while ((ch = fgetc(file)) != EOF) {
         numOfLines += ch == '\n';
@@ -80,7 +80,11 @@ SyntaxAnalysatorErrors dumpSyntaxAnalysatorArrOfLexems(const SyntaxAnalysator* a
         char* lexemDbgStr = NULL;
         getLexemDebugString(&lexem, &lexemDbgStr);
         const char* type = getLexemTypeString(lexem.type);
-        LOG_DEBUG_VARS(lexem.type, lexem.lexemSpecificName, type, lexemDbgStr, lexem.doubleData);
+        if (lexem.type == CONST_LEXEM_TYPE) {
+            LOG_DEBUG_VARS(lexem.type, lexem.lexemSpecificName, type, lexemDbgStr, lexem.doubleData);
+        } else {
+            LOG_DEBUG_VARS(lexem.type, lexem.lexemSpecificName, type, lexemDbgStr);
+        }
         FREE(lexemDbgStr);
     }
     LOG_DEBUG_VARS("---------------------");

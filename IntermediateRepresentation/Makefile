@@ -8,9 +8,12 @@ CFLAGS += -fsanitize=address
 MY_LOG_LIB_NAME    			:= my_loglib
 SOURCE_DIR		   			:= source
 LEXEM_REALIZATIONS_PATH		:= ../LexemsRealizations/source
+SYNTAX_TREE_PATH			:= ../SyntaxTree/source
 DUMPER_MODULE_PATH 			:= ../Dumper/source
+SEMANTIC_CHECK_MODULE_PATH  := ../SemanticChecker/source
 MODULE_NAME       			:= IntermidRepr
-BUILD_DIR          			:= building
+BUILD_DIR_PATH          	:= building
+BUILD_DIR_TARGET_NAME		:= createBuildDir
 LOGGER_EXT_LIB_DIR 			:= external/LoggerLib
 
 ifeq ($(DEBUG), 0)
@@ -21,40 +24,49 @@ endif
 
 # -------------------------   LIB RUN   -----------------------------
 
-# SRC 	   		   := $(SOURCE_DIR)/decisionTreeErrors.cpp $(SOURCE_DIR)/decisionTreeLib.cpp $(SOURCE_DIR)/dumper.cpp $(SOURCE_DIR)/main.cpp
-SRC := 													\
-	$(LEXEM_REALIZATIONS_PATH)/lexemsRealizations.cpp	\
-	$(LEXEM_REALIZATIONS_PATH)/errorsHandler.cpp		\
-	$(SOURCE_DIR)/main.cpp								\
-	$(SOURCE_DIR)/intermidReprErrorsHandler.cpp			\
-	$(SOURCE_DIR)/lexemAnalisator.cpp					\
+SRC := 						\
+	$(LEXEM_REALIZATIONS_PATH)/lexemsRealizations.cpp\
+	$(LEXEM_REALIZATIONS_PATH)/errorsHandler.cpp\
+	$(SYNTAX_TREE_PATH)/syntaxTree.cpp\
+	$(SYNTAX_TREE_PATH)/assignParents.cpp\
+	$(SYNTAX_TREE_PATH)/syntaxTreeErrorsHandler.cpp\
+	$(SEMANTIC_CHECK_MODULE_PATH)/semanticChecker.cpp\
+	$(SEMANTIC_CHECK_MODULE_PATH)/semanticCheckerErrorsHandler.cpp\
+	$(DUMPER_MODULE_PATH)/dumper.cpp\
+	$(SOURCE_DIR)/main.cpp					\
+	$(SOURCE_DIR)/intermidRepr.cpp					\
+	$(SOURCE_DIR)/intermidReprErrorsHandler.cpp					\
 
-OBJ := $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(notdir ${SRC}))
+OBJ := $(patsubst %.cpp, $(BUILD_DIR_PATH)/%.o, $(notdir ${SRC}))
 
 CFLAGS += -I $(LOGGER_EXT_LIB_DIR)/include
 
 $(MODULE_NAME): $(OBJ)
-	$(CC) $^ -o $(BUILD_DIR)/$(MODULE_NAME) -l$(MY_LOG_LIB_NAME) $(CFLAGS)
+	@$(CC) $^ -o $(BUILD_DIR_PATH)/$(MODULE_NAME) -l$(MY_LOG_LIB_NAME) $(CFLAGS)
 
-$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp | $(BUILD_DIR)
-	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+$(BUILD_DIR_PATH)/%.o: $(SOURCE_DIR)/%.cpp | $(BUILD_DIR)
+	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
-$(BUILD_DIR)/%.o: $(LEXEM_REALIZATIONS_PATH)/%.cpp | $(BUILD_DIR)
-	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+$(BUILD_DIR_PATH)/%.o: $(LEXEM_REALIZATIONS_PATH)/%.cpp | $(BUILD_DIR_TARGET_NAME)
+	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
-# $(BUILD_DIR)/%.o: $(DUMPER_MODULE_PATH)/%.cpp | $(BUILD_DIR)
-# 	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+$(BUILD_DIR_PATH)/%.o: $(SYNTAX_TREE_PATH)/%.cpp | $(BUILD_DIR_TARGET_NAME)
+	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
-# WARNING: always cleans building directory
+$(BUILD_DIR_PATH)/%.o: $(DUMPER_MODULE_PATH)/%.cpp | $(BUILD_DIR_TARGET_NAME)
+	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+
+$(BUILD_DIR_PATH)/%.o: $(SEMANTIC_CHECK_MODULE_PATH)/%.cpp | $(BUILD_DIR_TARGET_NAME)
+	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
 # to get rid of DEADLY SIGNAL: sudo sysctl vm.mmap_rnd_bits=28
-
+# WARNING: always cleans building directory
 run: clean $(MODULE_NAME)
-	./building/$(MODULE_NAME)
+	$(BUILD_DIR_PATH)/$(MODULE_NAME)
 
 # -------------------------   HELPER TARGETS   ---------------------------
 
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
+$(BUILD_DIR_TARGET_NAME):
+	mkdir -p $(BUILD_DIR_PATH)
 clean:
-	rm -rf $(BUILD_DIR)/*.o $(BUILD_DIR)/$(MODULE_NAME)
+	rm -rf $(BUILD_DIR_PATH)/*.o $(BUILD_DIR_PATH)/$(MODULE_NAME)

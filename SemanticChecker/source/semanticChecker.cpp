@@ -179,7 +179,7 @@ SemanticCheckerErrors getIdentificatorByLexem(
     const Lexem*           lexem,
     Identificator*         result
 ) {
-    LOG_DEBUG_VARS(lexem->strRepr);
+    //LOG_DEBUG_VARS(lexem->strRepr);
     IF_ARG_NULL_RETURN(checker);
     IF_ARG_NULL_RETURN(lexem);
     IF_ARG_NULL_RETURN(result);
@@ -239,7 +239,7 @@ static SemanticCheckerErrors findBlockOfCodeNodeForIdentificator(const SemanticC
 
     do {
         size_t parentInd = (*node)->parent;
-        LOG_DEBUG_VARS((*node)->memBuffIndex, parentInd);
+        //LOG_DEBUG_VARS((*node)->memBuffIndex, parentInd);
         //LOG_DEBUG_VARS((*node)->memBuffIndex, parentInd);
         *node = getSyntaxTreeNodePtr(checker->tree, parentInd);
 
@@ -276,8 +276,8 @@ SemanticCheckerErrors addNewIdentificator(
         .scopeNode   = scopeNode,
         .arrInd      = checker->tableArrLen,
     };
-    LOG_ERROR("i am func");
-    LOG_DEBUG_VARS(checker->tableArrLen);
+    //LOG_ERROR("i am func");
+    //LOG_DEBUG_VARS(checker->tableArrLen);
     IF_ERR_RETURN(addNewIdentificator2Table(checker, &id));
 
     return SEMANTIC_CHECKER_STATUS_OK;
@@ -285,25 +285,31 @@ SemanticCheckerErrors addNewIdentificator(
 
 SemanticCheckerErrors recursiveAddOfIdentificatorsFromTree(
     SemanticChecker* checker,
-    size_t curNodeInd,
-    Lexems identificatorDataType
+    size_t           curNodeInd,
+    Lexems           identificatorDataType
 ) {
     IF_ARG_NULL_RETURN(checker);
 
     if (!curNodeInd)
         return SEMANTIC_CHECKER_STATUS_OK;
 
-    LOG_FUNC_STARTED();
     Node node   = *getSyntaxTreeNodePtr(checker->tree, curNodeInd);
     Lexem lexem = node.lexem;
 
-    if (lexem.type == IDENTIFICATOR_LEXEM_TYPE && identificatorDataType != INVALID_LEXEM) {
+
+    if (lexem.type == IDENTIFICATOR_LEXEM_TYPE && 
+        identificatorDataType != INVALID_LEXEM) {
         IF_ERR_RETURN(addNewIdentificator(checker, &node, VARIABLE_IDENTIFICATOR));
         return SEMANTIC_CHECKER_STATUS_OK;
     }
 
     size_t left  = node.left;
     size_t right = node.right;
+
+    if (lexem.lexemSpecificName == OPERATOR_ASSIGN_LEXEM) {
+        IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, left,  identificatorDataType));
+        return SEMANTIC_CHECKER_STATUS_OK;
+    }
 
     // if node is not a data type
     if (lexem.lexemSpecificName != KEYWORD_INT_LEXEM) {
@@ -318,10 +324,7 @@ SemanticCheckerErrors recursiveAddOfIdentificatorsFromTree(
     if (!left)
         left = right, right = 0; // swap, we want left not to be 0
 
-    LOG_ERROR("int");
-    LOG_DEBUG_VARS(left, right);
     Node childNode = *getSyntaxTreeNodePtr(checker->tree, left);
-    LOG_DEBUG_VARS("bruh");
     // this is declaration of variable
     if ((   childNode.lexem.type == IDENTIFICATOR_LEXEM_TYPE &&
             childNode.left == 0 && childNode.right == 0) ||
@@ -332,15 +335,12 @@ SemanticCheckerErrors recursiveAddOfIdentificatorsFromTree(
     }
 
     // otherwise, this is function declaration
-    LOG_DEBUG_VARS("be");
     if (childNode.lexem.type == IDENTIFICATOR_LEXEM_TYPE) {
         IF_ERR_RETURN(addNewIdentificator(checker, &childNode, FUNCTION_IDENTIFICATOR));
 
-        LOG_DEBUG_VARS("bim");
         IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, childNode.left,  identificatorDataType));
         IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, childNode.right, identificatorDataType));
     }
-    LOG_FUNC_FINISHED();
 
     return SEMANTIC_CHECKER_STATUS_OK;
 }
@@ -372,7 +372,7 @@ static SemanticCheckerErrors findLocalVarsForFuncRecursive(
     if (!curNodeInd)
         return SEMANTIC_CHECKER_STATUS_OK;
 
-    LOG_DEBUG_VARS(curNodeInd);
+    //LOG_DEBUG_VARS(curNodeInd);
     Node node = *getSyntaxTreeNodePtr(checker->tree, curNodeInd);
     Lexem lexem = node.lexem;
 
@@ -443,7 +443,7 @@ SemanticCheckerErrors dumpTableOfIdentificators(SemanticChecker* checker) {
     IF_ARG_NULL_RETURN(checker);
 
     LOG_DEBUG_VARS("-----------------------------");
-    LOG_DEBUG_VARS("checker table of identificators");
+    LOG_DEBUG_VARS("semantic checker table of identificators");
     for (size_t arrInd = 0; arrInd < checker->tableArrLen; ++arrInd) {
         Identificator id = checker->tableOfVars[arrInd];
         char* dbgLine = NULL;

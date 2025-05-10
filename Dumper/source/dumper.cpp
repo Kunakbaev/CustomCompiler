@@ -139,7 +139,7 @@ static DumperErrors addNodeDumpStructToBuffer(
 
         char* tmpPtr = tmpBuffer;
         tmpPtr += snprintf(tmpPtr, TMP_BUFFER_SIZE - (tmpPtr - tmpBuffer),
-        "iamnode_id_%zu [shape=circle, style=filled, fillcolor=\"%s\" margin=0, penwidth=\"3%\" fontcolor=white, color=\"%s\", label=< \n"
+        "iamnode_id_%zu [shape=circle, style=filled, fillcolor=\"%s\" margin=0, penwidth=\"3\" fontcolor=white, color=\"%s\", label=< \n"
             "<TABLE cellspacing=\"0\" border=\"0\"> \n"
                 "<TR><TD colspan=\"2\">%s</TD></TR>\n",
                 node->memBuffIndex, color, borderColor, lexemDataStr);
@@ -345,7 +345,6 @@ DumperErrors dumperDumpSyntaxTree(
     IF_ERR_RETURN(drawSyntaxTreeRecursively(dumper, tree, tree->root, 0, settings));
 
     strncat(buffer, "}\n", BUFFER_SIZE);
-    //LOG_DEBUG_VARS(buffer);
     fprintf(outputFile, buffer);
     fclose(outputFile);
 

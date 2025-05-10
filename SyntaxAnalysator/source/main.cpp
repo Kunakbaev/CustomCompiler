@@ -5,7 +5,6 @@
 int main() {
     setLoggingLevel(DEBUG);
 
-    exit(0);
     Dumper dumper = {};
     dumperConstructor(&dumper, 10, "logs", "png");
 
@@ -17,13 +16,11 @@ int main() {
     readArrOfLexemsFromFile(&analysator);
 
     dumpSyntaxAnalysatorArrOfLexems(&analysator);
-
-    dumpSyntaxAnalysatorArrOfLexems(&analysator);
     generateSyntaxTree(&analysator);
 
     dumpSyntaxTreeInConsole(&analysator.tree);
-    openImageOfCurrentStateSyntaxTree(&analysator.tree);
-
+    dumpSyntaxTree(&analysator.tree);
+    // openImageOfCurrentStateSyntaxTree(&analysator.tree);
     saveAnalysatorSyntaxTree2File(&analysator);
 
     destructSyntaxAnalysator(&analysator);

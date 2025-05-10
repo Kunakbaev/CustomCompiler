@@ -8,7 +8,7 @@
 
 enum IntermidReprErrors {
     INTERMID_REPR_STATUS_OK             = 0,
-    #include "errorsPlainText.in"
+    #include "errorsPlainText.txt"
 };
 
 #undef ERROR_UNPACK

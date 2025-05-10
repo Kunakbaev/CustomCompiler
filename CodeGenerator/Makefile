@@ -42,31 +42,31 @@ OBJ := $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(notdir ${SRC}))
 CFLAGS += -I $(LOGGER_EXT_LIB_DIR)/include
 
 $(MODULE_NAME): $(OBJ)
-	$(CC) $^ -o $(BUILD_DIR)/$(MODULE_NAME) -l$(MY_LOG_LIB_NAME) $(CFLAGS)
+	@$(CC) $^ -o $(BUILD_DIR)/$(MODULE_NAME) -l$(MY_LOG_LIB_NAME) $(CFLAGS)
 
 $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp | $(BUILD_DIR)
-	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
 $(BUILD_DIR)/%.o: $(LEXEM_REALIZATIONS_PATH)/%.cpp | $(BUILD_DIR)
-	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
 $(BUILD_DIR)/%.o: $(SYNTAX_TREE_PATH)/%.cpp | $(BUILD_DIR)
-	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
 $(BUILD_DIR)/%.o: $(DUMPER_MODULE_PATH)/%.cpp | $(BUILD_DIR)
-	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
 $(BUILD_DIR)/%.o: $(SEMANTIC_CHECK_MODULE_PATH)/%.cpp | $(BUILD_DIR)
-	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
 # WARNING: always cleans building directory
 
 run: clean $(MODULE_NAME)
-	./building/$(MODULE_NAME)
+	@./building/$(MODULE_NAME)
 
 # -------------------------   HELPER TARGETS   ---------------------------
 
 $(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
+	@mkdir -p $(BUILD_DIR)
 clean:
-	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/$(MODULE_NAME)
+	@rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/$(MODULE_NAME)

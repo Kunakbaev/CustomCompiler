@@ -228,7 +228,7 @@ LexemAnalysatorErrors getArrayOfLexems(LexemAnalysator* analysator) {
         isCharLexemDelim(curCh, &isDelim);
 
         bool isNaturalDelim = strchr(naturalDelims, curCh) != NULL;
-        LOG_DEBUG_VARS(curCh, i, tmpString, isDelim, isNaturalDelim);
+        //LOG_DEBUG_VARS(curCh, i, tmpString, isDelim, isNaturalDelim);
         if (isDelim || isNaturalDelim || isPrevLexemDelim) {
             TRY2ADD_LEXEM2ARR();
             curCharInd = 0;

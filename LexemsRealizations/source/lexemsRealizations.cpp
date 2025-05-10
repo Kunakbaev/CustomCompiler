@@ -43,7 +43,7 @@ LexemsRealizationsErrors initLexemWithString(const char* line, Lexem* lexem) {
     IF_ARG_NULL_RETURN(line);
     IF_ARG_NULL_RETURN(lexem);
 
-    LOG_DEBUG_VARS(LEXEM_ARR_SIZE, line);
+    //LOG_DEBUG_VARS(LEXEM_ARR_SIZE, line);
     for (int i = 1; i < LEXEM_ARR_SIZE; ++i) {
         bool isSame = strcmp(allLexemsArr[i].strRepr, line) == 0;
         //LOG_DEBUG_VARS(i, allLexemsArr[i].strRepr, line, isSame);
@@ -118,7 +118,7 @@ static LexemsRealizationsErrors initLexemFromFileFormat(LexemType type, const ch
     char* strRepr  = NULL;
     size_t lineLen = strlen(line);
     errno = 0;
-    LOG_DEBUG_VARS(type, line);
+    //LOG_DEBUG_VARS(type, line);
     switch (type) {
         case CONST_LEXEM_TYPE:
             lexem->doubleData = strtod(line, &endPtr);
@@ -162,7 +162,7 @@ LexemsRealizationsErrors readLexemFromFile(FILE* file, Lexem* lexem,
     char* endPtr = 0;
     errno = 0;
     LexemType lexemType = (LexemType)strtol(lineBuffer, &endPtr, 10); // ASK: bad cast?
-    LOG_DEBUG_VARS(lineBuffer, lexemType);
+    //LOG_DEBUG_VARS(lineBuffer, lexemType);
     assert(errno == 0);
     //LOG_DEBUG_VARS(lineBuffer, lexemType);
 
@@ -171,7 +171,7 @@ LexemsRealizationsErrors readLexemFromFile(FILE* file, Lexem* lexem,
 
     //LOG_DEBUG_VARS(lineBuffer);
     initLexemFromFileFormat(lexemType, lineBuffer, lexem);
-    LOG_DEBUG_VARS(lexem->lexemSpecificName, lexem->doubleData);
+    //LOG_DEBUG_VARS(lexem->lexemSpecificName, lexem->doubleData);
 
     return LEXEMS_REALIZATIONS_STATUS_OK;
 }

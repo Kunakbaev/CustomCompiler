@@ -15,7 +15,7 @@ int main() {
     CodeGenerator generator = {};
     constructCodeGenerator(sourceFilePath, destFilePath, &dumper, &generator);
     readCodeGeneratorSyntaxTreeFromFile(&generator);
-    openImageOfCurrentStateSyntaxTree(&generator.tree);
+    //openImageOfCurrentStateSyntaxTree(&generator.tree);
 
     semanticCheckOfSyntaxTree(&generator.checker);
     generateAssemblerCodeFromSyntaxTree(&generator);
