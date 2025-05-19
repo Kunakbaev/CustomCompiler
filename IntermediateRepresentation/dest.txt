@@ -55,14 +55,16 @@ fib(int, int):
 	return
 
 main():
-	enter 2
-	push 10.000
+	enter 3
+	input
 	pop @0
-	paramIn -1.000
-	paramIn @0
-	call fib
+	input
 	pop @1
+	push @0
 	push @1
+	add
+	pop @2
+	push @2
 	output
 	push 0.000
 	leave

@@ -228,14 +228,11 @@ static GenMyCustomAsmErrors addNasmCommandStrRepr2file(
             ADD_TAB_LINE_IMPL("call myPrintfFunction\n");
             break;
         case            INPUT_INTERMID_REPR_CMD:
-
+            ADD_LINE_IMPL("call readSingleInt\n");
             break;
         case           RETURN_INTERMID_REPR_CMD:
             if (isMain) {
-                    ADD_LINE_IMPL("call clearAndOutputBuffer\n");
-                ADD_TAB_LINE_IMPL("pop  rdi\n"); // what if for some reason exit code is not zero
-                ADD_TAB_LINE_IMPL("mov  rax, 60\n");
-                ADD_TAB_LINE_IMPL("syscall\n");
+                    ADD_LINE_IMPL("call myHaltFunction\n");
             } else {
                     ADD_LINE_IMPL("pop  rbx\n"); // save return address
                      ADD_TAB_LINE("add  rsp, %d\n", funcRepr->numOfArguments * 8);
@@ -314,6 +311,8 @@ GenMyCustomAsmErrors genMyCustomAsmAndSaveIt2File(
             "singleIntFormatSpec db \"%%d\", 10, 0\n\n"
             "section .text\n"
             "extern myPrintfFunction\n"
+            "extern readSingleInt\n"
+            "extern myHaltFunction\n"
             "extern clearAndOutputBuffer\n"
             "global _start\n\n"
         );

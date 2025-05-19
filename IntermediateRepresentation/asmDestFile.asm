@@ -4,6 +4,8 @@ singleIntFormatSpec db "%d", 10, 0
 
 section .text
 extern myPrintfFunction
+extern readSingleInt
+extern myHaltFunction
 extern clearAndOutputBuffer
 global _start
 
@@ -124,20 +126,23 @@ function_fib:
 	push rbx
 	ret
 _start:
-	enter 16, 0
-	push 10
+	enter 24, 0
+	call readSingleInt
 	pop  qword [rbp + -8]
-	push -1
-	push qword [rbp + -8]
-	call function_fib
+	call readSingleInt
 	pop  qword [rbp + -16]
+	push qword [rbp + -8]
 	push qword [rbp + -16]
+	pop  rbx
+	pop  rax
+	add  rax, rbx
+	push rax
+
+	pop  qword [rbp + -24]
+	push qword [rbp + -24]
 	push singleIntFormatSpec
 	call myPrintfFunction
 	push 0
 	pop  rax
 	leave
-	call clearAndOutputBuffer
-	pop  rdi
-	mov  rax, 60
-	syscall
+	call myHaltFunction

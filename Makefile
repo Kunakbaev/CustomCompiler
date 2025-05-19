@@ -83,8 +83,10 @@ run: clean $(LIB_RUN_NAME)
 # ./$(SYNTAX_ANALYSATOR_BUILD_PATH)/$(SYNTAX_ANALYSATOR_BUILD_NAME)
 # ./$(INTERMID_REPR_BUILD_PATH)/$(INTERMID_REPR_BUILD_NAME)
 
+# TODO:
 runNasm: run
-	make -C $(INTERMID_REPR_PATH)
+	@make -C $(INTERMID_REPR_PATH) runAndCompileNasm
+	@$(INTERMID_REPR_BUILD_PATH)/nasmCodeProg
 
 # -------------------------   HELPER TARGETS   ---------------------------
 

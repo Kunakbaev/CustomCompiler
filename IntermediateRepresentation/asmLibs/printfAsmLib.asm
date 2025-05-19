@@ -358,6 +358,7 @@ myPrintfFunctionCdeclFormat:
         jmp formatStringCharsLoop
     formatStringLoopEnd:
 
+    call clearAndOutputBuffer
     ; save buffer len to memory, so that on the next call it will be valid
     mov [numOfCharsInOutputBuffer], r11
 

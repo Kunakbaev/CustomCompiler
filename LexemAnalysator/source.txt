@@ -20,8 +20,9 @@ int fib(int ind, int x) {
 }
 
 int main() {
-    int nnn = 10;
-    int res = fib(nnn, -1);
+    int a, b;
+    input(a, b);
+    int res = a + b;
     output(res);
 
     return 0;

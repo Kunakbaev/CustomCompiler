@@ -4,7 +4,9 @@ LOGGER_FLAGS :=
 # CFLAGS = -D _DEBUG
 # CFLAGS += -D NDEBUG
 CFLAGS += -fsanitize=address
-ASM_COMPILER := nasm
+
+ASM_COMPILER 	  := nasm
+ASM_COMPILER_ARGS := -f elf64
 
 MY_LOG_LIB_NAME    			:= my_loglib
 SOURCE_DIR		   			:= source
@@ -18,6 +20,21 @@ BUILD_DIR_PATH          	:= building
 BUILD_DIR_TARGET_NAME		:= createBuildDir
 LOGGER_EXT_LIB_DIR 			:= external/LoggerLib
 
+ASM_LIBS_FOLDER				:= asmLibs
+NASM_SOURCE_FILE			:= asmDestFile.asm
+PRINTF_LIB_SOURCE_FILE		:= $(ASM_LIBS_FOLDER)/printfAsmLib.asm
+ SCANF_LIB_SOURCE_FILE		:= $(ASM_LIBS_FOLDER)/scanfAsmLib.asm
+  HALT_LIB_SOURCE_FILE		:= $(ASM_LIBS_FOLDER)/haltAsmLib.asm
+
+PRINTF_LIB_NAME				:= printfLib
+ SCANF_LIB_NAME				:= scanfLib
+  HALT_LIB_NAME				:= haltLib
+
+NASM_EXEC_FILE_NAME			:= nasmCodeProg
+PRINTF_LIB_EXEC_FILE_NAME	:= printfLib.o
+ SCANF_LIB_EXEC_FILE_NAME   := scanfLib.o
+  HALT_LIB_EXEC_FILE_NAME	:= haltLib.o
+
 ifeq ($(DEBUG), 0)
 	ASSERT_DEFINE = -DNDEBUG
 endif
@@ -26,8 +43,8 @@ endif
 
 # -------------------------   LIB RUN   -----------------------------
 
-SRC := 						\
-	$(LEXEM_REALIZATIONS_PATH)/lexemsRealizations.cpp\
+SRC := 												 				\
+	$(LEXEM_REALIZATIONS_PATH)/lexemsRealizations.cpp				\
 	$(LEXEM_REALIZATIONS_PATH)/errorsHandler.cpp\
 	$(SYNTAX_TREE_PATH)/syntaxTree.cpp\
 	$(SYNTAX_TREE_PATH)/assignParents.cpp\
@@ -70,17 +87,22 @@ $(BUILD_DIR_PATH)/%.o: $(SEMANTIC_CHECK_MODULE_PATH)/%.cpp | $(BUILD_DIR_TARGET_
 # to get rid of DEADLY SIGNAL: sudo sysctl vm.mmap_rnd_bits=28
 # WARNING: always cleans building directory
 run: clean $(MODULE_NAME)
-	$(BUILD_DIR_PATH)/$(MODULE_NAME)
+	@$(BUILD_DIR_PATH)/$(MODULE_NAME)
 
 runAndCompileNasm:
-#$(ASM_COMPILER) ./asmDestFile.asm ./printfAsmLib.asm -o bruh.o -f elf64
-	nasm -o bruh.o asmDestFile.asm -f elf64
-	nasm -o printfLib.o printfAsmLib.asm -f elf64
-	ld -no-pie -o bruh bruh.o printfLib.o
+	@$(ASM_COMPILER) -o $(BUILD_DIR_PATH)/$(NASM_EXEC_FILE_NAME).o 	   $(NASM_SOURCE_FILE) 		 $(ASM_COMPILER_ARGS)
+	@$(ASM_COMPILER) -o $(BUILD_DIR_PATH)/$(PRINTF_LIB_EXEC_FILE_NAME) $(PRINTF_LIB_SOURCE_FILE) $(ASM_COMPILER_ARGS)
+	@$(ASM_COMPILER) -o $(BUILD_DIR_PATH)/$(SCANF_LIB_EXEC_FILE_NAME)   $(SCANF_LIB_SOURCE_FILE) $(ASM_COMPILER_ARGS)
+	@$(ASM_COMPILER) -o $(BUILD_DIR_PATH)/$(HALT_LIB_EXEC_FILE_NAME)     $(HALT_LIB_SOURCE_FILE) $(ASM_COMPILER_ARGS)
+	@ld -no-pie      -o $(BUILD_DIR_PATH)/$(NASM_EXEC_FILE_NAME) 	\
+		$(BUILD_DIR_PATH)/$(NASM_EXEC_FILE_NAME).o 					\
+		$(BUILD_DIR_PATH)/$(PRINTF_LIB_EXEC_FILE_NAME)				\
+		$(BUILD_DIR_PATH)/$(SCANF_LIB_EXEC_FILE_NAME)				\
+		$(BUILD_DIR_PATH)/$(HALT_LIB_EXEC_FILE_NAME)				\
 
 # -------------------------   HELPER TARGETS   ---------------------------
 
 $(BUILD_DIR_TARGET_NAME):
-	mkdir -p $(BUILD_DIR_PATH)
+	@mkdir -p $(BUILD_DIR_PATH)
 clean:
-	rm -rf $(BUILD_DIR_PATH)/*.o $(BUILD_DIR_PATH)/$(MODULE_NAME)
+	@rm -rf $(BUILD_DIR_PATH)/*.o $(BUILD_DIR_PATH)/$(MODULE_NAME)
