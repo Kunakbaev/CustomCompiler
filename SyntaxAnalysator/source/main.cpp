@@ -20,7 +20,8 @@ int main() {
 
     dumpSyntaxTreeInConsole(&analysator.tree);
     dumpSyntaxTree(&analysator.tree);
-    // openImageOfCurrentStateSyntaxTree(&analysator.tree);
+    LOG_ERROR("main");
+    openImageOfCurrentStateSyntaxTree(&analysator.tree);
     saveAnalysatorSyntaxTree2File(&analysator);
 
     destructSyntaxAnalysator(&analysator);

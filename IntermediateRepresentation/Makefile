@@ -4,9 +4,11 @@ LOGGER_FLAGS :=
 # CFLAGS = -D _DEBUG
 # CFLAGS += -D NDEBUG
 CFLAGS += -fsanitize=address
+ASM_COMPILER := nasm
 
 MY_LOG_LIB_NAME    			:= my_loglib
 SOURCE_DIR		   			:= source
+GEN_MY_ASM_CODE				:= ../GenAsmForMyProcessor/source
 LEXEM_REALIZATIONS_PATH		:= ../LexemsRealizations/source
 SYNTAX_TREE_PATH			:= ../SyntaxTree/source
 DUMPER_MODULE_PATH 			:= ../Dumper/source
@@ -36,6 +38,9 @@ SRC := 						\
 	$(SOURCE_DIR)/main.cpp					\
 	$(SOURCE_DIR)/intermidRepr.cpp					\
 	$(SOURCE_DIR)/intermidReprErrorsHandler.cpp					\
+	$(GEN_MY_ASM_CODE)/genMyCustomAsm.cpp						\
+	$(GEN_MY_ASM_CODE)/genMyCustomAsmErrorsHandler.cpp			\
+
 
 OBJ := $(patsubst %.cpp, $(BUILD_DIR_PATH)/%.o, $(notdir ${SRC}))
 
@@ -45,6 +50,9 @@ $(MODULE_NAME): $(OBJ)
 	@$(CC) $^ -o $(BUILD_DIR_PATH)/$(MODULE_NAME) -l$(MY_LOG_LIB_NAME) $(CFLAGS)
 
 $(BUILD_DIR_PATH)/%.o: $(SOURCE_DIR)/%.cpp | $(BUILD_DIR)
+	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+
+$(BUILD_DIR_PATH)/%.o: $(GEN_MY_ASM_CODE)/%.cpp | $(BUILD_DIR_TARGET_NAME)
 	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
 $(BUILD_DIR_PATH)/%.o: $(LEXEM_REALIZATIONS_PATH)/%.cpp | $(BUILD_DIR_TARGET_NAME)
@@ -63,6 +71,12 @@ $(BUILD_DIR_PATH)/%.o: $(SEMANTIC_CHECK_MODULE_PATH)/%.cpp | $(BUILD_DIR_TARGET_
 # WARNING: always cleans building directory
 run: clean $(MODULE_NAME)
 	$(BUILD_DIR_PATH)/$(MODULE_NAME)
+
+runAndCompileNasm:
+#$(ASM_COMPILER) ./asmDestFile.asm ./printfAsmLib.asm -o bruh.o -f elf64
+	nasm -o bruh.o asmDestFile.asm -f elf64
+	nasm -o printfLib.o printfAsmLib.asm -f elf64
+	ld -no-pie -o bruh bruh.o printfLib.o
 
 # -------------------------   HELPER TARGETS   ---------------------------
 

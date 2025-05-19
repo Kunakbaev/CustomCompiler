@@ -124,7 +124,7 @@ SyntaxAnalysatorErrors parseGrammar(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
     IF_ERR_RETURN(parseBlockOfCode(analysator));
-    MOVE_CUR_LEX_PTR(); // TODO: ????
+    //MOVE_CUR_LEX_PTR(); // TODO: ????
     LOG_DEBUG_VARS(analysator->curLexemInd, analysator->lenOfArr);
     IF_NOT_COND_RETURN(analysator->curLexemInd == analysator->lenOfArr,
                        SYNTAX_ANALYSATOR_INVALID_ARGUMENT); // TODO: add error
@@ -132,9 +132,12 @@ SyntaxAnalysatorErrors parseGrammar(SyntaxAnalysator* analysator) {
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
 
-SyntaxAnalysatorErrors parseBlockOfCode(SyntaxAnalysator* analysator) {
+SyntaxAnalysatorErrors parseBlockOfCode(
+    SyntaxAnalysator* analysator
+) {
     IF_ARG_NULL_RETURN(analysator);
 
+    LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr, analysator->curLexemInd, analysator->lenOfArr);
     if (!isCurLexem_DELIMS_OPEN_CURLY_BRACKET_LEXEM(analysator)) {
         IF_ERR_RETURN(parseSingleCommandLine(analysator));
         return SYNTAX_ANALYSATOR_STATUS_OK;
@@ -142,15 +145,17 @@ SyntaxAnalysatorErrors parseBlockOfCode(SyntaxAnalysator* analysator) {
 
     // ASK: what happens with empty block of code?
     MOVE_CUR_LEX_PTR();
+    LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr, analysator->curLexemInd, analysator->lenOfArr);
     // maybe move to common parser
     size_t leftOperand = 0;
     while (analysator->curLexemInd < analysator->lenOfArr &&
            !isCurLexem_DELIMS_CLOSE_CURLY_BRACKET_LEXEM(analysator)) {
+        LOG_DEBUG_VARS("inside");
         IF_ERR_RETURN(parseBlockOfCode(analysator));
+        LOG_DEBUG_VARS("outside");
         size_t rightOperand = ANALYSATOR_ROOT;
 
-        LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr);
-        REQUIRE_LEXEM(DELIMS_SEMICOLON_LEXEM);
+        LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr, analysator->curLexemInd);
         MOVE_CUR_LEX_PTR();
 
         if (!leftOperand)
@@ -161,11 +166,12 @@ SyntaxAnalysatorErrors parseBlockOfCode(SyntaxAnalysator* analysator) {
         // openImageOfCurrentStateSyntaxTree(&analysator->tree);
         leftOperand = ANALYSATOR_ROOT;
     }
+    LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr, analysator->curLexemInd, analysator->lenOfArr);
 
     //Lexem lexem = getCurrentLexem(analysator);
     //LOG_DEBUG_VARS(lexem.strRepr, lexem.lexemSpecificName, lexem.type);
     REQUIRE_LEXEM(DELIMS_CLOSE_CURLY_BRACKET_LEXEM);
-    MOVE_CUR_LEX_PTR();
+    //MOVE_CUR_LEX_PTR();
 
     Lexem blockOfCodeLexem = {.type = DELIM_LEXEM_TYPE, .strRepr = "{}", {.lexemSpecificName = DELIMS_OPEN_CURLY_BRACKET_LEXEM}};
     setNew_DELIMS_OPEN_CURLY_BRACKET_LEXEM_nodeAsRoot(analysator, leftOperand, 0);
@@ -191,9 +197,14 @@ SyntaxAnalysatorErrors parseBlockOfCode(SyntaxAnalysator* analysator) {
 SyntaxAnalysatorErrors parseSingleCommandLine(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
+    //openImageOfCurrentStateSyntaxTree(&analysator->tree);
+
+    LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr);
     TRY_PARSER_FUNC(parseFunctionDeclaration);
     TRY_PARSER_FUNC(parseFunctionCall);
     TRY_PARSER_FUNC(parseReturnKeyword);
+
+    LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr);
     TRY_PARSER_FUNC(parseVariablesDeclaration);
 
     TRY_PARSER_FUNC(parseAssignOperator);
@@ -220,12 +231,15 @@ static SyntaxAnalysatorErrors parseSequenceOfLexemsDelimetedByComma(
     IF_ARG_NULL_RETURN(isCurLexemFinal);
     IF_ARG_NULL_RETURN(resultNode);
 
+    LOG_DEBUG_VARS("int declaration");
+    LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr, analysator->curLexemInd);
     *resultNode = 0;
     while (analysator->curLexemInd < analysator->lenOfArr &&
            !(*isCurLexemFinal)(analysator)) {
         IF_ERR_RETURN((*nextParseFuncPtr)(analysator));
         size_t rightOperand = ANALYSATOR_ROOT;
 
+        LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr);
         if (!(*resultNode))
             *resultNode = rightOperand, rightOperand = 0;
 
@@ -240,6 +254,7 @@ static SyntaxAnalysatorErrors parseSequenceOfLexemsDelimetedByComma(
         }
     }
 
+    LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr);
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
 
@@ -255,6 +270,7 @@ SyntaxAnalysatorErrors parseVariablesDeclaration(SyntaxAnalysator* analysator) {
     IF_NOT_COND_RETURN(varDeclOperand != 0, SYNTAX_ANALYSATOR_INVALID_ARGUMENT); // TODO:
 
     setNew_KEYWORD_INT_LEXEM_nodeAsRoot(analysator, varDeclOperand, 0);
+    REQUIRE_LEXEM(DELIMS_SEMICOLON_LEXEM);
 
     //openImageOfCurrentStateSyntaxTree(&analysator->tree);
 
@@ -269,6 +285,8 @@ static SyntaxAnalysatorErrors parseFuncArgs(
     IF_ARG_NULL_RETURN(analysator);
     IF_ARG_NULL_RETURN(nextParseFuncPtr);
 
+    Lexem curLex = GET_CUR_LEXEM();
+    LOG_DEBUG_VARS(curLex.strRepr);
     REQUIRE_LEXEM(DELIMS_OPEN_SIMPLE_BRACKET_LEXEM);
     MOVE_CUR_LEX_PTR();
 
@@ -319,6 +337,7 @@ SyntaxAnalysatorErrors parseReturnKeyword(SyntaxAnalysator* analysator) {
     }
 
     setNew_KEYWORD_RETURN_LEXEM_nodeAsRoot(analysator, resultOperand, 0);
+    REQUIRE_LEXEM(DELIMS_SEMICOLON_LEXEM);
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
@@ -341,6 +360,7 @@ SyntaxAnalysatorErrors parseFunctionDeclaration(SyntaxAnalysator* analysator) {
     IF_ERR_RETURN(parseFuncArgs(analysator, parseOneFuncArg, &argsOperand));
 
     IF_ERR_RETURN(parseBlockOfCode(analysator));
+    //assert(isBlockOfCode);
     size_t blockOfCodeOperand = ANALYSATOR_ROOT;
 
     SET_NEW_ROOT(NEW_IDENTIFICATOR_NODE(funcNameLexem, argsOperand, blockOfCodeOperand));
@@ -361,7 +381,6 @@ SyntaxAnalysatorErrors parseFunctionCall(SyntaxAnalysator* analysator) {
     IF_ERR_RETURN(parseFuncArgs(analysator, parseCompareOperator, &argsOperand));
 
     SET_NEW_ROOT(NEW_IDENTIFICATOR_NODE(curLexem, argsOperand, 0));
-    // openImageOfCurrentStateSyntaxTree(&analysator->tree);
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
@@ -376,6 +395,7 @@ SyntaxAnalysatorErrors parseOutputKeyword(SyntaxAnalysator* analysator) {
     IF_ERR_RETURN(parseFuncArgs(analysator, parseTerminal, &varOperand));
 
     setNew_KEYWORD_OUTPUT_LEXEM_nodeAsRoot(analysator, varOperand, 0);
+    REQUIRE_LEXEM(DELIMS_SEMICOLON_LEXEM);
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
@@ -390,6 +410,7 @@ SyntaxAnalysatorErrors parseInputKeyword(SyntaxAnalysator* analysator) {
     IF_ERR_RETURN(parseFuncArgs(analysator, parseTerminal, &varOperand));
 
     setNew_KEYWORD_INPUT_LEXEM_nodeAsRoot(analysator, varOperand, 0);
+    REQUIRE_LEXEM(DELIMS_SEMICOLON_LEXEM);
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
@@ -474,6 +495,7 @@ static SyntaxAnalysatorErrors commonParserOfIterativeOperators(
     IF_ARG_NULL_RETURN(doesSatisfyRule);
     IF_ARG_NULL_RETURN(nextParseFunc);
 
+    LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr);
     IF_ERR_RETURN((*nextParseFunc)(analysator));
     while (analysator->curLexemInd < analysator->lenOfArr &&
            (*doesSatisfyRule)(GET_CUR_LEXEM())) {
@@ -497,7 +519,14 @@ static bool assignOpRule(Lexem lexem) {
 static SyntaxAnalysatorErrors parseAssignOperator(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
+    //openImageOfCurrentStateSyntaxTree(&analysator->tree);
     IF_ERR_RETURN(commonParserOfIterativeOperators(analysator, assignOpRule, parseLogicOrOperator));
+    //REQUIRE_LEXEM(DELIMS_SEMICOLON_LEXEM);
+    // IF_NOT_COND_RETURN(
+    //     isCurLexem_DELIMS_COMMA_LEXEM(analysator) ||
+    //     isCurLexem_DELIMS_SEMICOLON_LEXEM(analysator),
+    //     SYNTAX_ANALYSATOR_INVALID_ARGUMENT
+    // );
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
 }
@@ -574,6 +603,7 @@ static bool addSubOpRule(Lexem lexem) {
 static SyntaxAnalysatorErrors parseAdditionSubtractionOperators(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
+    LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr);
     IF_ERR_RETURN(commonParserOfIterativeOperators(analysator, addSubOpRule, parseMultiplicationDivisionOperators));
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
@@ -582,6 +612,7 @@ static SyntaxAnalysatorErrors parseAdditionSubtractionOperators(SyntaxAnalysator
 static SyntaxAnalysatorErrors parseBracketsOrFuncCalls(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
+    LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr);
     // WARNING: in different order it doesn't work, bruh
     TRY_PARSER_FUNC(parseFunctionCall);
     TRY_PARSER_FUNC(parseSimpleBracketDelim);
@@ -597,6 +628,7 @@ static bool mulDivOpRule(Lexem lexem) {
 static SyntaxAnalysatorErrors parseMultiplicationDivisionOperators(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
+    LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr);
     IF_ERR_RETURN(commonParserOfIterativeOperators(analysator, mulDivOpRule, parseBracketsOrFuncCalls));
 
     return SYNTAX_ANALYSATOR_STATUS_OK;
@@ -605,8 +637,10 @@ static SyntaxAnalysatorErrors parseMultiplicationDivisionOperators(SyntaxAnalysa
 static SyntaxAnalysatorErrors parseSimpleBracketDelim(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
+    LOG_DEBUG_VARS(GET_CUR_LEXEM().strRepr);
     if (!isCurLexem_DELIMS_OPEN_SIMPLE_BRACKET_LEXEM(analysator)) {
         //Lexem lex = GET_CUR_LEXEM();
+        LOG_DEBUG_VARS("term");
         IF_ERR_RETURN(parseTerminal(analysator));
         return SYNTAX_ANALYSATOR_STATUS_OK;
     }
@@ -624,6 +658,7 @@ static SyntaxAnalysatorErrors parseSimpleBracketDelim(SyntaxAnalysator* analysat
 static SyntaxAnalysatorErrors parseTerminal(SyntaxAnalysator* analysator) {
     IF_ARG_NULL_RETURN(analysator);
 
+    LOG_DEBUG_VARS("parse terminal");
     Lexem lexem = GET_CUR_LEXEM();
     switch (lexem.type) {
         case CONST_LEXEM_TYPE:

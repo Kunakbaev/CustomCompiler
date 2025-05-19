@@ -1,0 +1,5 @@
+ERROR_UNPACK(MEMORY_ALLOCATION_ERROR,    1, "couldn't allocate memory.\n")
+ERROR_UNPACK(INVALID_ARGUMENT,           2, "invalid argument, possibly set to NULL.\n")
+ERROR_UNPACK(FILE_OPENING_ERROR,         3, "couldn't open file error.\n")
+ERROR_UNPACK(DUMPER_ERROR,               4, "error occurred in dumper submodule.\n")
+ERROR_UNPACK(INTERMID_REPR_ERROR,        6, "error occured in intermediate representation submodule.\n")

@@ -1,4 +1,5 @@
 #include "../include/intermidRepr.hpp"
+#include "../../GenAsmForMyProcessor/include/genMyCustomAsm.hpp"
 
 int main() {
     setLoggingLevel(DEBUG);
@@ -21,6 +22,12 @@ int main() {
     LOG_ERROR("ok3");
 
     dumpTextVersionOfIntermidRepr2file(&intermidRepr, destFilePath);
+
+    genMyCustomAsmAndSaveIt2File(
+        &intermidRepr,
+        "asmDestFile.asm",
+        false
+    );
 
     destructIntermidRepr(&intermidRepr);
 

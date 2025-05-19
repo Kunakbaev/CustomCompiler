@@ -1,20 +1,28 @@
-int fibonacci(int n) {
-    if (n == 1) {
+
+
+int fact(int n) {
+    if (n <= 1)
         return 1;
-    };
 
-    return fibonacci(n - 2) + fibonacci(n - 1);
-};
+    int arg = n - 1;
+    int result = fact(arg) * n;
+    return result;
+}
 
-int add(int x, int y, int z) {
-    return x + y + z;
-};
+int fib(int ind, int x) {
+    if (ind <= 2)
+        return 1;
+
+    int arg1 = ind - 1;
+    int arg2 = ind - 2;
+
+    return fib(arg1, x) + fib(arg2, x);
+}
 
 int main() {
-    int a, b = 4 + a, c;
-    while (a <= 10 and b + c <= 82) {
-        a = a + 1;
-    };
+    int nnn = 10;
+    int res = fib(nnn, -1);
+    output(res);
 
     return 0;
-};
+}

@@ -31,7 +31,6 @@ static CommandTypeAndStrReprPair commandsStrReprs[] = {
 
 
 
-
 IntermidReprErrors constructIntermidReprFromSyntaxTree(
     const char*       sourceFilePath,
     Dumper*           dumper,
@@ -59,8 +58,11 @@ IntermidReprErrors readIntermidReprSyntaxTreeFromFile(
     IF_ARG_NULL_RETURN(intermidRepr);
 
     SYNTAX_TREE_ERR_CHECK(readSyntaxTreeFromFile(&intermidRepr->tree, intermidRepr->sourceFilePath));
+    SYNTAX_TREE_ERR_CHECK(dumpSyntaxTree(&intermidRepr->tree));
+
     SEMANTIC_CHECKER_ERR_CHECK(buildTableOfIdentificators(&intermidRepr->checker));
     SEMANTIC_CHECKER_ERR_CHECK(dumpTableOfIdentificators(&intermidRepr->checker));
+    SEMANTIC_CHECKER_ERR_CHECK(semanticCheckOfSyntaxTree(&intermidRepr->checker));
     SEMANTIC_CHECKER_ERR_CHECK(recursiveFindTinTout(&intermidRepr->checker, intermidRepr->checker.tree->root));
 
     return INTERMID_REPR_STATUS_OK;
@@ -135,8 +137,10 @@ static size_t getLocalVariableIndex(
 
     size_t ind = 0;
     const LocalVarsListNode* node = function->localVarsListTail;
+    LOG_DEBUG_VARS(variableName);
     while (node != NULL) {
         int cmpRes = strcmp(node->name, variableName);
+        LOG_DEBUG_VARS(node->name, variableName);
         if (cmpRes == 0) {
             // because we traverse elements in reverse
             return function->numOfLocalVars - ind - 1;
@@ -150,11 +154,34 @@ static size_t getLocalVariableIndex(
     return -1;
 }
 
+static IntermidReprErrors countNumOfFuncArgs(
+    const IntermidRepr* intermidRepr,
+    FunctionRepr*       function,
+    size_t              curNodeInd
+) {
+    IF_ARG_NULL_RETURN(intermidRepr);
+    IF_ARG_NULL_RETURN(function);
+
+    if (!curNodeInd)
+        return INTERMID_REPR_STATUS_OK;
+
+    Node* node  = getSyntaxTreeNodePtr(&intermidRepr->tree, curNodeInd);
+    Lexem lexem = node->lexem;
+
+    if (lexem.type == IDENTIFICATOR_LEXEM_TYPE) {
+        ++function->numOfArguments;
+    }
+
+    IF_ERR_RETURN(countNumOfFuncArgs(intermidRepr, function, node->left));
+    IF_ERR_RETURN(countNumOfFuncArgs(intermidRepr, function, node->right));
+}
+
 static IntermidReprErrors countMaxNumberOfLocalVars(
     const IntermidRepr* intermidRepr,
     FunctionRepr*       function,
     size_t              curNodeInd,
-    int*                result          // number of local variables
+    int*                result,          // number of local variables
+    bool                isDeclaration
 ) {
     IF_ARG_NULL_RETURN(intermidRepr);
     IF_ARG_NULL_RETURN(function);
@@ -166,13 +193,16 @@ static IntermidReprErrors countMaxNumberOfLocalVars(
     Node* node  = getSyntaxTreeNodePtr(&intermidRepr->tree, curNodeInd);
     Lexem lexem = node->lexem;
 
-    if (lexem.type == IDENTIFICATOR_LEXEM_TYPE) {
+    LOG_DEBUG_VARS(curNodeInd, lexem.strRepr, isDeclaration);
+    if (isDeclaration && lexem.type == IDENTIFICATOR_LEXEM_TYPE) {
         Identificator id = {};
-        getIdentificatorByLexem(&intermidRepr->checker, &lexem, &id);
-        if (curNodeInd == id.declNodeInd &&
-            id.type    == VARIABLE_IDENTIFICATOR) { // we found variable declaration 
+        SEMANTIC_CHECKER_ERR_CHECK(getIdentificatorByLexem(&intermidRepr->checker, &lexem, &id));
+        LOG_DEBUG_VARS(id.type, FUNCTION_IDENTIFICATOR, VARIABLE_IDENTIFICATOR);
+        if (id.declNodeInd == curNodeInd &&
+            id.type        == VARIABLE_IDENTIFICATOR) { // we found variable declaration 
             *result = *result + 1; // increase number of local variables
 
+            LOG_DEBUG_VARS(id.declNodeInd, lexem.strRepr);
             LocalVarsListNode* newNode = (LocalVarsListNode*)calloc(1,                         sizeof(LocalVarsListNode));
             newNode->name              =              (char*)calloc(strlen(lexem.strRepr) + 1, sizeof(char));
             IF_NOT_COND_RETURN(newNode       != NULL, INTERMID_REPR_MEMORY_ALLOCATION_ERROR);
@@ -184,8 +214,9 @@ static IntermidReprErrors countMaxNumberOfLocalVars(
         }
     }
 
-    IF_ERR_RETURN(countMaxNumberOfLocalVars(intermidRepr, function, node->left,  result));
-    IF_ERR_RETURN(countMaxNumberOfLocalVars(intermidRepr, function, node->right, result));
+    isDeclaration |= lexem.lexemSpecificName == KEYWORD_INT_LEXEM;
+    IF_ERR_RETURN(countMaxNumberOfLocalVars(intermidRepr, function, node->left,  result, isDeclaration));
+    IF_ERR_RETURN(countMaxNumberOfLocalVars(intermidRepr, function, node->right, result, isDeclaration));
     
     return INTERMID_REPR_STATUS_OK;
 }
@@ -193,6 +224,41 @@ static IntermidReprErrors countMaxNumberOfLocalVars(
 #include "delimsReprDefines.cpp"
 #include "keywordsReprDefines.cpp"
 #include "operatorsReprDefines.cpp"
+
+static IntermidReprErrors addFunctionCallArguments(
+    const IntermidRepr* intermidRepr,
+    FunctionRepr*       function,
+    size_t              curNodeInd,
+    size_t              depthInBlocksOfCode
+) {
+    IF_ARG_NULL_RETURN(intermidRepr);
+    IF_ARG_NULL_RETURN(function);
+
+    if (!curNodeInd)
+        return INTERMID_REPR_STATUS_OK;
+
+    Node* node  = getSyntaxTreeNodePtr(&intermidRepr->tree, curNodeInd);
+    Lexem lexem = node->lexem;
+
+    if (lexem.type == IDENTIFICATOR_LEXEM_TYPE) {
+        Identificator id = {};
+        getIdentificatorByLexem(&intermidRepr->checker, &lexem, &id);
+        if (id.type == VARIABLE_IDENTIFICATOR) {
+            LOG_DEBUG_VARS(lexem.strRepr);
+            size_t varInd = getLocalVariableIndex(function, lexem.strRepr);
+            ADD_COMMAND(PARAM_IN_VAR_INTERMID_REPR_CMD, variableInd, varInd);
+        }
+    }
+    if (lexem.type == CONST_LEXEM_TYPE) {
+        ADD_COMMAND(PARAM_IN_NUM_INTERMID_REPR_CMD, doubleNumber, lexem.doubleData);
+    }
+
+    // pushing arguments in reverse order
+    IF_ERR_RETURN(addFunctionCallArguments(intermidRepr, function, node->right, depthInBlocksOfCode));
+    IF_ERR_RETURN(addFunctionCallArguments(intermidRepr, function, node->left,  depthInBlocksOfCode));
+
+    return INTERMID_REPR_STATUS_OK;
+}
 
 static IntermidReprErrors parseFunctionRecursive(
     const IntermidRepr* intermidRepr,
@@ -218,11 +284,18 @@ static IntermidReprErrors parseFunctionRecursive(
             Identificator id = {};
             getIdentificatorByLexem(&intermidRepr->checker, &lexem, &id);
             if (id.type == VARIABLE_IDENTIFICATOR) {
-                LOG_DEBUG_VARS(lexem.strRepr);
-                size_t varInd = getLocalVariableIndex(function, lexem.strRepr);
-                ADD_COMMAND(PUSH_VAR_INTERMID_REPR_CMD, variableInd, varInd);
+                // node's parent is != NULL as we always have our code wrapped in brackets 
+                // so root always exists and it's equal to { delim
+                Node* parent = getSyntaxTreeNodePtr(&intermidRepr->tree, node->parent);
+                Lexem parentLexem = parent->lexem;
+                if (parentLexem.type              == OPERATOR_LEXEM_TYPE ||
+                    parentLexem.lexemSpecificName == KEYWORD_RETURN_LEXEM) {
+                    LOG_DEBUG_VARS(lexem.strRepr);
+                    size_t varInd = getLocalVariableIndex(function, lexem.strRepr);
+                    ADD_COMMAND(PUSH_VAR_INTERMID_REPR_CMD, variableInd, varInd);
+                }
             } else {
-                GEN4LEFT();
+                IF_ERR_RETURN(addFunctionCallArguments(intermidRepr, function, curNodeInd, depthInBlocksOfCode));
                 ADD_COMMAND(CALL_INTERMID_REPR_CMD, functionName, lexem.strRepr);
                 return INTERMID_REPR_STATUS_OK;
             }
@@ -250,6 +323,25 @@ static IntermidReprErrors parseFunctionRecursive(
     return INTERMID_REPR_STATUS_OK;
 }
 
+static IntermidReprErrors passFuncArguments(
+    const IntermidRepr* intermidRepr,
+    FunctionRepr*       function,
+    Lexem               lexem
+) {
+    size_t depthInBlocksOfCode = 1; // this variable is actually used in ADD_COMMAND define
+    Identificator id = {};
+    getIdentificatorByLexem(&intermidRepr->checker, &lexem, &id);
+    // poping arguments in reverse order, so that first argument we pop is the last one
+    for (ssize_t argInd = 0; argInd < function->numOfArguments; ++argInd) {
+        size_t varArrInd = id.function.argumentVars[argInd];
+        Identificator var = intermidRepr->checker.tableOfVars[varArrInd]; // TODO: add getter func
+        //LOG_DEBUG_VARS(varArrInd, var.lexem.strRepr, var.lexem.type);
+        ADD_COMMAND(PARAM_OUT_INTERMID_REPR_CMD, variableInd, argInd);
+    }
+
+    return INTERMID_REPR_STATUS_OK;
+}
+
 static IntermidReprErrors parseFunction(
     const IntermidRepr* intermidRepr,
     FunctionRepr*       function,
@@ -265,12 +357,16 @@ static IntermidReprErrors parseFunction(
     Lexem lexem = node->lexem;
 
     function->numOfLocalVars = 0;
-    IF_ERR_RETURN(countMaxNumberOfLocalVars(intermidRepr, function, curNodeInd, &function->numOfLocalVars));
+    LOG_ERROR(function->functionName);
+    IF_ERR_RETURN(countNumOfFuncArgs(intermidRepr, function, node->left));
+    IF_ERR_RETURN(countMaxNumberOfLocalVars(intermidRepr, function, curNodeInd, &function->numOfLocalVars, false));
     function->numOfElements = 0;
 
     size_t depthInBlocksOfCode = 1; // not a very good solution, but defines for func call works this way
     ADD_COMMAND(ENTER_INTERMID_REPR_CMD, intNumber, function->numOfLocalVars);
     depthInBlocksOfCode = 0;
+
+    IF_ERR_RETURN(passFuncArguments(intermidRepr, function, lexem));
 
     numOfLabelsBefore = 0;
     // we need to traverse only right subtree, as left one contains
@@ -370,14 +466,14 @@ IntermidReprErrors getCommandStringRepr(
 }
 
 // WARNING: this function uses buffer which is a static variable
-static char* getLabelNameById(
+char* getLabelNameById(
     const FunctionRepr* function,
     size_t              labelInd
 ) {
     assert(function != NULL);
 
-    const size_t MAX_LABEL_NAME_LEN = 100;
-    static char buffer[MAX_LABEL_NAME_LEN + 1] = {};
+    const size_t MAX_LABEL_NAME_LEN             = 100;
+    static char  buffer[MAX_LABEL_NAME_LEN + 1] = {};
     snprintf(buffer, MAX_LABEL_NAME_LEN, "%s_L%d", function->functionName, labelInd);
 
     return buffer;
@@ -398,12 +494,15 @@ static IntermidReprErrors addStringRepresentation2File(
     fprintf(file, "%s", strRepr);
 
     switch (cmdType) {
+        case PARAM_IN_NUM_INTERMID_REPR_CMD:
         case PUSH_NUM_INTERMID_REPR_CMD:
             fprintf(file, " %.3f\n", command->argument.doubleNumber);
             break;
+        case PARAM_IN_VAR_INTERMID_REPR_CMD:
         case PUSH_VAR_INTERMID_REPR_CMD:
             fprintf(file, " @%zu\n", command->argument.variableInd);
             break;
+        case PARAM_OUT_INTERMID_REPR_CMD:
         case POP_VAR_INTERMID_REPR_CMD:
             fprintf(file, " @%zu\n", command->argument.variableInd);
             break;
@@ -434,13 +533,22 @@ IntermidReprErrors dumpTextVersionOfIntermidRepr2file(
 
     FILE* file = fopen(destFilePath, "w");
 
+    const size_t MAX_DEPTH_IN_BLOCKS_OF_CODE             = 50;
+    char         tabsBuffer[MAX_DEPTH_IN_BLOCKS_OF_CODE] = {};
+
     FunctionRepr* funcPtr = intermidRepr->funcReprListHead;
     while (funcPtr != NULL) {
-        fprintf(file, "%s:\n", funcPtr->functionName);
+        fprintf(file, "%s(", funcPtr->functionName);
+        for (int i = 0; i < funcPtr->numOfArguments; ++i) {
+            if (i) fprintf(file, ", ");
+            fprintf(file, "int");
+        }
+        fprintf(file, "):\n");
+
         IntermidReprElement* elemPtr = funcPtr->listHead;
         while (elemPtr != NULL) {
-            const size_t MAX_DEPTH_IN_BLOCKS_OF_CODE = 50;
-            char tabsBuffer[MAX_DEPTH_IN_BLOCKS_OF_CODE] = {};
+            // clear tabs buffer
+            memset(tabsBuffer, 0, MAX_DEPTH_IN_BLOCKS_OF_CODE * sizeof(char));
             for (size_t i = 0; i < elemPtr->depthInBlocksOfCode; ++i)
                 tabsBuffer[i] = '\t';
             // add tabs to indent blocks of code

@@ -106,4 +106,5 @@ static IntermidReprErrors recursiveGenerationOfCommandsForInputOrOutput(
         GEN4LEFT();                                                     \
         GEN4RIGHT();                                                    \
         ADD_COMMAND_NO_ARGS(LEAVE_INTERMID_REPR_CMD);                   \
+        ADD_COMMAND(RETURN_INTERMID_REPR_CMD, doubleNumber, 192);       \
     } while (0)

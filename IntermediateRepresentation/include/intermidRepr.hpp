@@ -65,12 +65,13 @@ struct LocalVarsListNode {
 struct FunctionRepr {
     size_t                  numOfElements;
     int                     numOfLocalVars;
+    int                     numOfArguments;
     char*                   functionName;
     IntermidReprElement*    listHead; // pointer to the head of linked list
     IntermidReprElement*    listTail; // pointer to the tail of linked list
     LocalVarsListNode*      localVarsListTail;
     FunctionRepr*           prevFunc;          
-    FunctionRepr*           nextFunc;          
+    FunctionRepr*           nextFunc;        
     // TODO: return type, for now it's just int
 };
 
@@ -81,6 +82,11 @@ struct IntermidRepr {
     SemanticChecker  checker;
     SyntaxTree       tree;
 };
+
+char* getLabelNameById(
+    const FunctionRepr* function,
+    size_t              labelInd
+);
 
 IntermidReprErrors getCommandStringRepr(
     IntermidReprCommandType commandType,

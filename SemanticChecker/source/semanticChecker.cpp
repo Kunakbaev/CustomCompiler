@@ -75,10 +75,10 @@ static SemanticCheckerErrors isAncestorInSyntaxTree(
     IF_ARG_NULL_RETURN(isAncestor);
 
     size_t fatherInd = father->memBuffIndex;
-    size_t sonInd    = son->memBuffIndex;
+    size_t sonInd    =    son->memBuffIndex;
     *isAncestor =
-        checker->tinArray[fatherInd] <= checker->tinArray[sonInd] &&
-          checker->toutArray[sonInd] <= checker->toutArray[fatherInd];
+        checker-> tinArray[fatherInd] <= checker-> tinArray[sonInd] &&
+        checker->toutArray[sonInd]    <= checker->toutArray[fatherInd];
 
     return SEMANTIC_CHECKER_STATUS_OK;
 }
@@ -101,19 +101,20 @@ static SemanticCheckerErrors recursiveCheckForIdentficatorsScopes(
     //LOG_DEBUG_VARS(node.memBuffIndex, left, right);
     if (lexem.type == IDENTIFICATOR_LEXEM_TYPE) {
         Identificator id = {};
-        LOG_DEBUG_VARS(lexem.strRepr);
+        //LOG_DEBUG_VARS(lexem.strRepr);
         IF_ERR_RETURN(getIdentificatorByLexem(checker, &lexem, &id));
         if (id.declNodeInd != curNodeInd) { // that's not a declaration, that's a usage of some identificator
             bool isAncestor = false;
             //LOG_DEBUG_VARS(node.memBuffIndex, id.scopeNode->memBuffIndex);
-            LOG_DEBUG_VARS(id.lexem.strRepr, id.scopeNode->memBuffIndex, curNodeInd, id.declNodeInd);
+            //LOG_DEBUG_VARS(id.lexem.strRepr, id.scopeNode->memBuffIndex, node.memBuffIndex, curNodeInd, id.declNodeInd);
             LOG_ERROR("var check");
             IF_ERR_RETURN(isAncestorInSyntaxTree(checker, id.scopeNode, &node, &isAncestor));
+            LOG_DEBUG_VARS(lexem.strRepr);
             IF_NOT_COND_RETURN(isAncestor, SEMANTIC_CHECKER_IDENTIFICATOR_USAGE_OUTSIDE_ITS_SCOPE);
             bool isAfterDecl = checker->tinArray[id.declNodeInd] <=
                                checker->tinArray[node.memBuffIndex];
-            LOG_DEBUG_VARS(checker->tinArray[id.declNodeInd], checker->tinArray[node.memBuffIndex]);
-            LOG_DEBUG_VARS(checker->toutArray[id.declNodeInd], checker->toutArray[node.memBuffIndex]);
+            // LOG_DEBUG_VARS(checker->tinArray[id.declNodeInd], checker->tinArray[node.memBuffIndex]);
+            // LOG_DEBUG_VARS(checker->toutArray[id.declNodeInd], checker->toutArray[node.memBuffIndex]);
             IF_NOT_COND_RETURN(isAfterDecl, SEMANTIC_CHECKER_IDENTIFICATOR_USAGE_BEFORE_ITS_DECLARATION);
         }
     }
@@ -148,6 +149,7 @@ static SemanticCheckerErrors semanticCheckForFuncDeclarations(SemanticChecker* c
 SemanticCheckerErrors semanticCheckOfSyntaxTree(SemanticChecker* checker) {
     IF_ARG_NULL_RETURN(checker);
 
+    IF_ERR_RETURN(recursiveFindTinTout(checker, checker->tree->root));
     IF_ERR_RETURN(recursiveCheckForIdentficatorsScopes(checker, checker->tree->root));
     IF_ERR_RETURN(semanticCheckForFuncDeclarations(checker));
 
@@ -207,7 +209,8 @@ static SemanticCheckerErrors addNewIdentificator2Table(
 
     Identificator resId = {};
     SemanticCheckerErrors err = getIdentificatorByLexem(checker, &id->lexem, &resId);
-    IF_NOT_COND_RETURN(err == SEMANTIC_CHECKER_IDENTIFICATOR_NOT_FOUND,
+    IF_NOT_COND_RETURN("identificator with such name already exists" && 
+                        err == SEMANTIC_CHECKER_IDENTIFICATOR_NOT_FOUND,
                        SEMANTIC_CHECKER_IDENTIFICATOR_IS_ALREADY_DECLARED);
 
     IF_NOT_COND_RETURN(checker->tableArrLen < MAX_NUM_OF_IDENTIFICATORS,
@@ -241,6 +244,7 @@ static SemanticCheckerErrors findBlockOfCodeNodeForIdentificator(const SemanticC
         size_t parentInd = (*node)->parent;
         //LOG_DEBUG_VARS((*node)->memBuffIndex, parentInd);
         //LOG_DEBUG_VARS((*node)->memBuffIndex, parentInd);
+        LOG_DEBUG_VARS(parentInd);
         *node = getSyntaxTreeNodePtr(checker->tree, parentInd);
 
         if ((*node)->lexem.lexemSpecificName == DELIMS_OPEN_CURLY_BRACKET_LEXEM)
@@ -267,6 +271,9 @@ SemanticCheckerErrors addNewIdentificator(
     Node*                    node,
     IdentificatorType        idType
 ) {
+    LOG_WARNING("add new identificator");
+    LOG_DEBUG_VARS(node->lexem.strRepr);
+
     Node* scopeNode = node;
     IF_ERR_RETURN(findBlockOfCodeNodeForIdentificator(checker, &scopeNode));
     Identificator id = {
@@ -278,6 +285,8 @@ SemanticCheckerErrors addNewIdentificator(
     };
     //LOG_ERROR("i am func");
     //LOG_DEBUG_VARS(checker->tableArrLen);
+    LOG_WARNING("NEW IDENTIFICATOR");
+    LOG_DEBUG_VARS(node->memBuffIndex, node->lexem.strRepr, scopeNode->memBuffIndex);
     IF_ERR_RETURN(addNewIdentificator2Table(checker, &id));
 
     return SEMANTIC_CHECKER_STATUS_OK;
@@ -296,66 +305,62 @@ SemanticCheckerErrors recursiveAddOfIdentificatorsFromTree(
     Node node   = *getSyntaxTreeNodePtr(checker->tree, curNodeInd);
     Lexem lexem = node.lexem;
 
-
-    if (lexem.type == IDENTIFICATOR_LEXEM_TYPE && 
-        identificatorDataType != INVALID_LEXEM) {
-        IF_ERR_RETURN(addNewIdentificator(checker, &node, VARIABLE_IDENTIFICATOR));
-        return SEMANTIC_CHECKER_STATUS_OK;
-    }
+    LOG_DEBUG_VARS(curNodeInd, node.memBuffIndex, lexem.strRepr, identificatorDataType != INVALID_LEXEM);
+    // if (lexem.type == IDENTIFICATOR_LEXEM_TYPE && 
+    //     identificatorDataType != INVALID_LEXEM) {
+    //     IF_ERR_RETURN(addNewIdentificator(checker, &node, VARIABLE_IDENTIFICATOR));
+    //     return SEMANTIC_CHECKER_STATUS_OK;
+    // }
 
     size_t left  = node.left;
     size_t right = node.right;
+
+    if (lexem.lexemSpecificName == KEYWORD_INT_LEXEM) {
+        IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, left,  KEYWORD_INT_LEXEM));
+        IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, right, KEYWORD_INT_LEXEM));
+        return SEMANTIC_CHECKER_STATUS_OK;
+    }
 
     if (lexem.lexemSpecificName == OPERATOR_ASSIGN_LEXEM) {
         IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, left,  identificatorDataType));
         return SEMANTIC_CHECKER_STATUS_OK;
     }
 
-    // if node is not a data type
-    if (lexem.lexemSpecificName != KEYWORD_INT_LEXEM) {
-        IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, left,  identificatorDataType));
-        IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, right, identificatorDataType));
-        return SEMANTIC_CHECKER_STATUS_OK;
-    }
+    // if (left != 0 && right != 0)
+    //     return SEMANTIC_CHECKER_STATUS_OK;
 
-    if (left != 0 && right != 0)
-        return SEMANTIC_CHECKER_STATUS_OK;
+    // if (!left)
+    //     left = right, right = 0; // swap, we want left not to be 0
 
-    if (!left)
-        left = right, right = 0; // swap, we want left not to be 0
-
-    Node childNode = *getSyntaxTreeNodePtr(checker->tree, left);
+    LOG_DEBUG_VARS(left, right);
+    //Node childNode = *getSyntaxTreeNodePtr(checker->tree, left);
     // this is declaration of variable
-    if ((   childNode.lexem.type == IDENTIFICATOR_LEXEM_TYPE &&
-            childNode.left == 0 && childNode.right == 0) ||
-            childNode.lexem.lexemSpecificName == DELIMS_COMMA_LEXEM) {
-        IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, left,  KEYWORD_INT_LEXEM));
-        IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, right, KEYWORD_INT_LEXEM));
+    if (    node.lexem.type == IDENTIFICATOR_LEXEM_TYPE &&
+            node.left == 0 && node.right == 0 &&
+            identificatorDataType != INVALID_LEXEM) {
+        IF_ERR_RETURN(addNewIdentificator(checker, &node, VARIABLE_IDENTIFICATOR));
+
+        // IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, left,  KEYWORD_INT_LEXEM));
+        // IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, right, KEYWORD_INT_LEXEM));
         return SEMANTIC_CHECKER_STATUS_OK;
     }
 
     // otherwise, this is function declaration
-    if (childNode.lexem.type == IDENTIFICATOR_LEXEM_TYPE) {
-        IF_ERR_RETURN(addNewIdentificator(checker, &childNode, FUNCTION_IDENTIFICATOR));
+    if (node.lexem.type == IDENTIFICATOR_LEXEM_TYPE &&
+        identificatorDataType != INVALID_LEXEM) {
+        IF_ERR_RETURN(addNewIdentificator(checker, &node, FUNCTION_IDENTIFICATOR));
 
-        IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, childNode.left,  identificatorDataType));
-        IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, childNode.right, identificatorDataType));
+        IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, left,  INVALID_LEXEM));
+        IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, right, INVALID_LEXEM));
+        return SEMANTIC_CHECKER_STATUS_OK;
     }
+
+    // if node is not a data type
+    IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, left,  identificatorDataType));
+    IF_ERR_RETURN(recursiveAddOfIdentificatorsFromTree(checker, right, identificatorDataType));
 
     return SEMANTIC_CHECKER_STATUS_OK;
 }
-//
-// SemanticCheckerErrors recursiveAddArgsForFunction(
-//     SemanticChecker* checker,
-//     size_t curNodeInd,
-//
-// ) {
-//     IF_ARG_NULL_RETURN(checker);
-//
-//     if (!curNodeInd) return
-//
-//     return SEMANTIC_CHECKER_STATUS_OK;
-// }
 
 static SemanticCheckerErrors findLocalVarsForFuncRecursive(
     SemanticChecker* checker,
@@ -406,6 +411,7 @@ static SemanticCheckerErrors findArgsForFunctions(
             continue;
 
         Node funcNode      = *getSyntaxTreeNodePtr(checker->tree, func.declNodeInd);
+        LOG_DEBUG_VARS(func.declNodeInd, funcNode.right);
         Node argsScopeNode = *getSyntaxTreeNodePtr(checker->tree, funcNode.right);
 
         const size_t MAX_NUM_OF_LOCAL_VARS = 1 << 10; // FIXME: 2 passes also is cringe, vector?

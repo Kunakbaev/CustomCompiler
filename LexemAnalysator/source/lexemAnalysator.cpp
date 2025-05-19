@@ -268,7 +268,7 @@ LexemAnalysatorErrors wrapAllCodeInBrackets(char** inputLine) {
     IF_NOT_COND_RETURN(strCopy != NULL, LEXEM_ANALYSATOR_MEMORY_ALLOCATION_ERROR);
     strcpy(strCopy, *inputLine);
 
-    sprintf(*inputLine, "{\n%s\n};\n", strCopy);
+    sprintf(*inputLine, "{\n%s\n}\n", strCopy);
     FREE(strCopy);
     return LEXEM_ANALYSATOR_STATUS_OK;
 }

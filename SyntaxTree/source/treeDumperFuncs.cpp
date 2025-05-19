@@ -145,7 +145,7 @@ SyntaxTreeErrors dumpSyntaxTree(SyntaxTree* tree) {
 SyntaxTreeErrors openImageOfCurrentStateSyntaxTree(SyntaxTree* tree) {
     IF_ARG_NULL_RETURN(tree);
     //RETURN_IF_INVALID();
-    //LOG_WARNING("--------------@@@@@@@@@@@@@@@@@@@@@");
+    LOG_WARNING("--------------@@@@@@@@@@@@@@@@@@@@@");
 
     // first we need to create image of current state of tree
     IF_ERR_RETURN(dumpSyntaxTree(tree));
@@ -154,9 +154,8 @@ SyntaxTreeErrors openImageOfCurrentStateSyntaxTree(SyntaxTree* tree) {
     const char* fileName = getLastImageFileName(tree->dumper);
     const size_t TMP_LEN = 100;
     char tmp[TMP_LEN]    = {};
-    snprintf(tmp, TMP_LEN, "xdg-open %s", fileName);
+    snprintf(tmp, TMP_LEN, "/usr/bin/xdg-open %s", fileName);
     system(tmp);
-    exit(0);
 
     return SYNTAX_TREE_STATUS_OK;
 }
