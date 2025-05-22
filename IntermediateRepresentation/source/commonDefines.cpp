@@ -1,9 +1,6 @@
 
-#define GEN4LEFT() \
-    IF_ERR_RETURN(parseFunctionRecursive(intermidRepr, function, node->left, depthInBlocksOfCode));
-
-#define GEN4RIGHT() \
-    IF_ERR_RETURN(parseFunctionRecursive(intermidRepr, function, node->right, depthInBlocksOfCode));
+#define GEN4LEFT()  IF_ERR_RETURN(parseFunctionRecursive(intermidRepr, function, node->left,  depthInBlocksOfCode, isFunctionCall));
+#define GEN4RIGHT() IF_ERR_RETURN(parseFunctionRecursive(intermidRepr, function, node->right, depthInBlocksOfCode, isFunctionCall));
 
 #define ADD_COMMAND(commandType, argumentField, argumentValue)                              \
 do {                                                                                        \

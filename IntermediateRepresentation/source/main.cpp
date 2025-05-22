@@ -1,8 +1,14 @@
 #include "../include/intermidRepr.hpp"
 #include "../../GenAsmForMyProcessor/include/genMyCustomAsm.hpp"
 
-int main() {
+const char* NASM_OPTION_ARG_NAME = "nasm";
+
+int main(int argc, const char* argv[]) {
     setLoggingLevel(DEBUG);
+    assert(argc >= 2);
+
+    LOG_DEBUG_VARS(argv[0], argv[1], NASM_OPTION_ARG_NAME);
+    bool isNasm = strcmp(argv[1], NASM_OPTION_ARG_NAME) == 0;
 
     LOG_DEBUG("Hello!");
 
@@ -14,19 +20,15 @@ int main() {
 
     IntermidRepr intermidRepr = {};
     constructIntermidReprFromSyntaxTree(sourceFilePath, &dumper, &intermidRepr);
-    LOG_ERROR("ok1");
     readIntermidReprSyntaxTreeFromFile(&intermidRepr);
-    LOG_ERROR("ok2");
 
     getIntermidRepresentation(&intermidRepr);
-    LOG_ERROR("ok3");
-
     dumpTextVersionOfIntermidRepr2file(&intermidRepr, destFilePath);
 
     genMyCustomAsmAndSaveIt2File(
         &intermidRepr,
         "asmDestFile.asm",
-        false
+        !isNasm
     );
 
     destructIntermidRepr(&intermidRepr);

@@ -1,0 +1,15 @@
+
+
+<pre><span></span><span class="p">&lt;</span><span class="nc">postal-address</span><span class="p">&gt;</span> <span class="o">::=</span> <span class="p">&lt;</span><span class="nc">name-part</span><span class="p">&gt;</span> <span class="p">&lt;</span><span class="nc">street-address</span><span class="p">&gt;</span> <span class="p">&lt;</span><span class="nc">zip-part</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nc">name-part</span><span class="p">&gt;</span> <span class="o">::=</span> <span class="p">&lt;</span><span class="nc">personal-part</span><span class="p">&gt;</span> <span class="p">&lt;</span><span class="nc">last-name</span><span class="p">&gt;</span> <span class="p">&lt;</span><span class="nc">opt-suffix-part</span><span class="p">&gt;</span> <span class="p">&lt;</span><span class="nc">EOL</span><span class="p">&gt;</span> | <span class="p">&lt;</span><span class="nc">personal-part</span><span class="p">&gt;</span> <span class="p">&lt;</span><span class="nc">name-part</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nc">personal-part</span><span class="p">&gt;</span> <span class="o">::=</span> <span class="p">&lt;</span><span class="nc">first-name</span><span class="p">&gt;</span> | <span class="p">&lt;</span><span class="nc">initial</span><span class="p">&gt;</span> "."
+
+<span class="p">&lt;</span><span class="nc">street-address</span><span class="p">&gt;</span> <span class="o">::=</span> <span class="p">&lt;</span><span class="nc">house-num</span><span class="p">&gt;</span> <span class="p">&lt;</span><span class="nc">street-name</span><span class="p">&gt;</span> <span class="p">&lt;</span><span class="nc">opt-apt-num</span><span class="p">&gt;</span> <span class="p">&lt;</span><span class="nc">EOL</span><span class="p">&gt;</span>
+
+     <span class="p">&lt;</span><span class="nc">zip-part</span><span class="p">&gt;</span> <span class="o">::=</span> <span class="p">&lt;</span><span class="nc">town-name</span><span class="p">&gt;</span> "," <span class="p">&lt;</span><span class="nc">state-code</span><span class="p">&gt;</span> <span class="p">&lt;</span><span class="nc">ZIP-code</span><span class="p">&gt;</span> <span class="p">&lt;</span><span class="nc">EOL</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nc">opt-suffix-part</span><span class="p">&gt;</span> <span class="o">::=</span> "Sr." | "Jr." | <span class="p">&lt;</span><span class="nc">roman-numeral</span><span class="p">&gt;</span> | ""
+  <span class="p">&lt;</span><span class="nc">opt-apt-num</span><span class="p">&gt;</span> <span class="o">::=</span> "Apt" <span class="p">&lt;</span><span class="nc">apt-num</span><span class="p">&gt;</span> | ""
+</pre>

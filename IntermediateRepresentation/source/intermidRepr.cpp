@@ -225,7 +225,7 @@ static IntermidReprErrors countMaxNumberOfLocalVars(
 #include "keywordsReprDefines.cpp"
 #include "operatorsReprDefines.cpp"
 
-static IntermidReprErrors addFunctionCallArguments(
+static IntermidReprErrors addArgsForInputFunc(
     const IntermidRepr* intermidRepr,
     FunctionRepr*       function,
     size_t              curNodeInd,
@@ -240,31 +240,42 @@ static IntermidReprErrors addFunctionCallArguments(
     Node* node  = getSyntaxTreeNodePtr(&intermidRepr->tree, curNodeInd);
     Lexem lexem = node->lexem;
 
+    LOG_DEBUG_VARS(lexem.strRepr);
+    IF_NOT_COND_RETURN(
+        lexem.type              == IDENTIFICATOR_LEXEM_TYPE ||
+        lexem.lexemSpecificName == DELIMS_COMMA_LEXEM,
+        INTERMID_REPR_INVALID_ARGUMENT
+    );
+
     if (lexem.type == IDENTIFICATOR_LEXEM_TYPE) {
         Identificator id = {};
         getIdentificatorByLexem(&intermidRepr->checker, &lexem, &id);
         if (id.type == VARIABLE_IDENTIFICATOR) {
             LOG_DEBUG_VARS(lexem.strRepr);
             size_t varInd = getLocalVariableIndex(function, lexem.strRepr);
-            ADD_COMMAND(PARAM_IN_VAR_INTERMID_REPR_CMD, variableInd, varInd);
+            ADD_COMMAND_NO_ARGS(INPUT_INTERMID_REPR_CMD);
+            ADD_COMMAND(POP_VAR_INTERMID_REPR_CMD, variableInd, varInd);
         }
-    }
-    if (lexem.type == CONST_LEXEM_TYPE) {
-        ADD_COMMAND(PARAM_IN_NUM_INTERMID_REPR_CMD, doubleNumber, lexem.doubleData);
+
+        return INTERMID_REPR_STATUS_OK;
     }
 
-    // pushing arguments in reverse order
-    IF_ERR_RETURN(addFunctionCallArguments(intermidRepr, function, node->right, depthInBlocksOfCode));
-    IF_ERR_RETURN(addFunctionCallArguments(intermidRepr, function, node->left,  depthInBlocksOfCode));
+    // poping arguments in reverse order
+    IF_ERR_RETURN(addArgsForInputFunc(intermidRepr, function, node->left,  depthInBlocksOfCode));
+    IF_ERR_RETURN(addArgsForInputFunc(intermidRepr, function, node->right, depthInBlocksOfCode));
 
     return INTERMID_REPR_STATUS_OK;
 }
+
+// TODO:
+int numOfArgs = 0;
 
 static IntermidReprErrors parseFunctionRecursive(
     const IntermidRepr* intermidRepr,
     FunctionRepr*       function,
     size_t              curNodeInd,
-    size_t              depthInBlocksOfCode
+    size_t              depthInBlocksOfCode,
+    bool                isFunctionCall
 ) {
     IF_ARG_NULL_RETURN(intermidRepr);
     IF_ARG_NULL_RETURN(function);
@@ -280,6 +291,7 @@ static IntermidReprErrors parseFunctionRecursive(
     if (isNum || lexem.type == IDENTIFICATOR_LEXEM_TYPE) {
         if (isNum) {
             ADD_COMMAND(PUSH_NUM_INTERMID_REPR_CMD, doubleNumber, lexem.doubleData);
+            numOfArgs += isFunctionCall;
         } else {
             Identificator id = {};
             getIdentificatorByLexem(&intermidRepr->checker, &lexem, &id);
@@ -288,14 +300,18 @@ static IntermidReprErrors parseFunctionRecursive(
                 // so root always exists and it's equal to { delim
                 Node* parent = getSyntaxTreeNodePtr(&intermidRepr->tree, node->parent);
                 Lexem parentLexem = parent->lexem;
-                if (parentLexem.type              == OPERATOR_LEXEM_TYPE ||
-                    parentLexem.lexemSpecificName == KEYWORD_RETURN_LEXEM) {
+                if (parentLexem.type              == OPERATOR_LEXEM_TYPE  ||
+                    parentLexem.lexemSpecificName == KEYWORD_RETURN_LEXEM ||
+                    isFunctionCall
+                ) {
                     LOG_DEBUG_VARS(lexem.strRepr);
                     size_t varInd = getLocalVariableIndex(function, lexem.strRepr);
                     ADD_COMMAND(PUSH_VAR_INTERMID_REPR_CMD, variableInd, varInd);
+                    numOfArgs += isFunctionCall;
                 }
             } else {
-                IF_ERR_RETURN(addFunctionCallArguments(intermidRepr, function, curNodeInd, depthInBlocksOfCode));
+                isFunctionCall = true;
+                GEN4LEFT();
                 ADD_COMMAND(CALL_INTERMID_REPR_CMD, functionName, lexem.strRepr);
                 return INTERMID_REPR_STATUS_OK;
             }
@@ -303,6 +319,35 @@ static IntermidReprErrors parseFunctionRecursive(
 
         GEN4LEFT();
         GEN4RIGHT();
+        return INTERMID_REPR_STATUS_OK;
+    }
+
+
+
+
+    bool  isInputLex = lexem.lexemSpecificName ==  KEYWORD_INPUT_LEXEM;
+    bool isOutputLex = lexem.lexemSpecificName ==  KEYWORD_OUTPUT_LEXEM;
+    if (isOutputLex) {
+        numOfArgs = 0;
+        isFunctionCall = true;
+        GEN4LEFT();
+        for (int i = 0; i < numOfArgs; ++i) {
+            ADD_COMMAND_NO_ARGS(OUTPUT_INTERMID_REPR_CMD);
+        }
+
+        return INTERMID_REPR_STATUS_OK;
+    }
+    if (isInputLex) {
+        Node* leftNode = getSyntaxTreeNodePtr(&intermidRepr->tree, node->left);
+        LOG_DEBUG_VARS(leftNode->lexem.strRepr);
+        IF_ERR_RETURN(addArgsForInputFunc(intermidRepr, function, leftNode->left, depthInBlocksOfCode));
+        return INTERMID_REPR_STATUS_OK;
+    }
+
+    // we want arguments to be in reverse order
+    if (isFunctionCall && lexem.lexemSpecificName == DELIMS_COMMA_LEXEM) {
+        GEN4RIGHT();
+        GEN4LEFT();
         return INTERMID_REPR_STATUS_OK;
     }
 
@@ -368,6 +413,7 @@ static IntermidReprErrors parseFunction(
 
     IF_ERR_RETURN(passFuncArguments(intermidRepr, function, lexem));
 
+    bool isFunctionCall = false;
     numOfLabelsBefore = 0;
     // we need to traverse only right subtree, as left one contains
     // only function's arguments declaration

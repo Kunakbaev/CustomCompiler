@@ -35,6 +35,10 @@ PRINTF_LIB_EXEC_FILE_NAME	:= printfLib.o
  SCANF_LIB_EXEC_FILE_NAME   := scanfLib.o
   HALT_LIB_EXEC_FILE_NAME	:= haltLib.o
 
+PROCESSOR_SUBMODULE_PATH	:= external/SPUprocessorEmulator
+	  MY_CUSTOM_ASM_PATH	:= ../$(PROCESSOR_SUBMODULE_PATH)/assembler
+		  PROCESSOR_PATH	:= ../$(PROCESSOR_SUBMODULE_PATH)/processor
+
 ifeq ($(DEBUG), 0)
 	ASSERT_DEFINE = -DNDEBUG
 endif
@@ -87,9 +91,11 @@ $(BUILD_DIR_PATH)/%.o: $(SEMANTIC_CHECK_MODULE_PATH)/%.cpp | $(BUILD_DIR_TARGET_
 # to get rid of DEADLY SIGNAL: sudo sysctl vm.mmap_rnd_bits=28
 # WARNING: always cleans building directory
 run: clean $(MODULE_NAME)
-	@$(BUILD_DIR_PATH)/$(MODULE_NAME)
+	echo "asm opt arg : $(ASM_OPT_ARG)"
+	$(BUILD_DIR_PATH)/$(MODULE_NAME) $(ASM_OPT_ARG)
 
 runAndCompileNasm:
+	echo "running nasm code"
 	@$(ASM_COMPILER) -o $(BUILD_DIR_PATH)/$(NASM_EXEC_FILE_NAME).o 	   $(NASM_SOURCE_FILE) 		 $(ASM_COMPILER_ARGS)
 	@$(ASM_COMPILER) -o $(BUILD_DIR_PATH)/$(PRINTF_LIB_EXEC_FILE_NAME) $(PRINTF_LIB_SOURCE_FILE) $(ASM_COMPILER_ARGS)
 	@$(ASM_COMPILER) -o $(BUILD_DIR_PATH)/$(SCANF_LIB_EXEC_FILE_NAME)   $(SCANF_LIB_SOURCE_FILE) $(ASM_COMPILER_ARGS)
@@ -99,6 +105,11 @@ runAndCompileNasm:
 		$(BUILD_DIR_PATH)/$(PRINTF_LIB_EXEC_FILE_NAME)				\
 		$(BUILD_DIR_PATH)/$(SCANF_LIB_EXEC_FILE_NAME)				\
 		$(BUILD_DIR_PATH)/$(HALT_LIB_EXEC_FILE_NAME)				\
+
+runMyAsm:
+	echo "running my custom asm"
+	@make -C $(MY_CUSTOM_ASM_PATH) run
+	@make -C $(PROCESSOR_PATH) run
 
 # -------------------------   HELPER TARGETS   ---------------------------
 

@@ -41,7 +41,7 @@ $(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.cpp | $(BUILD_DIR)
 	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
 $(BUILD_DIR)/%.o: $(LEXEM_REALIZATIONS_PATH)/%.cpp | $(BUILD_DIR)
-	@$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
+	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)
 
 # $(BUILD_DIR)/%.o: $(DUMPER_MODULE_PATH)/%.cpp | $(BUILD_DIR)
 # 	$(CC) -c $< $(CFLAGS) -o $@ $(ASSERT_DEFINE)

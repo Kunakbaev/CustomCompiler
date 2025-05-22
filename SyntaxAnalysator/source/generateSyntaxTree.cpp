@@ -392,7 +392,7 @@ SyntaxAnalysatorErrors parseOutputKeyword(SyntaxAnalysator* analysator) {
     MOVE_CUR_LEX_PTR();
 
     size_t varOperand = 0;
-    IF_ERR_RETURN(parseFuncArgs(analysator, parseTerminal, &varOperand));
+    IF_ERR_RETURN(parseFuncArgs(analysator, parseCompareOperator, &varOperand));
 
     setNew_KEYWORD_OUTPUT_LEXEM_nodeAsRoot(analysator, varOperand, 0);
     REQUIRE_LEXEM(DELIMS_SEMICOLON_LEXEM);
@@ -407,7 +407,7 @@ SyntaxAnalysatorErrors parseInputKeyword(SyntaxAnalysator* analysator) {
     MOVE_CUR_LEX_PTR();
 
     size_t varOperand = 0;
-    IF_ERR_RETURN(parseFuncArgs(analysator, parseTerminal, &varOperand));
+    IF_ERR_RETURN(parseFuncArgs(analysator, parseCompareOperator, &varOperand));
 
     setNew_KEYWORD_INPUT_LEXEM_nodeAsRoot(analysator, varOperand, 0);
     REQUIRE_LEXEM(DELIMS_SEMICOLON_LEXEM);

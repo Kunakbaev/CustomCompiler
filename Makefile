@@ -54,7 +54,7 @@ SYNTAX_ANALYSATOR_MODULE:
 
 INTERMID_REPR_MODULE:
 	@make -C $(INTERMID_REPR_PATH) clean
-	@make -C $(INTERMID_REPR_PATH) run
+	make -C $(INTERMID_REPR_PATH) ASM_OPT_ARG=$(MY_ASM) run
 
 # CODE_GENERATOR_MODULE:
 # 	@make -C $(CODE_GENERATOR_PATH) clean
@@ -74,19 +74,22 @@ $(LIB_RUN_NAME): LEXEM_ANALYSATOR_MODULE SYNTAX_ANALYSATOR_MODULE INTERMID_REPR_
 
 # WARNING: always cleans building directory
 
-runProcessor:
-	@make -C $(ASM_PATH) run
-	@make -C $(PROCESSOR_PATH) run
+# runProcessor:
+# 	@make -C $(ASM_PATH) run
+# 	@make -C $(PROCESSOR_PATH) run
 
-run: clean $(LIB_RUN_NAME)
+genSourceCode: clean $(LIB_RUN_NAME)
 # ./$(LEXEM_ANALYSATOR_BUILD_PATH)/$(LEXEM_ANALYSATOR_BUILD_NAME)
 # ./$(SYNTAX_ANALYSATOR_BUILD_PATH)/$(SYNTAX_ANALYSATOR_BUILD_NAME)
 # ./$(INTERMID_REPR_BUILD_PATH)/$(INTERMID_REPR_BUILD_NAME)
 
 # TODO:
-runNasm: run
+runNasm:
 	@make -C $(INTERMID_REPR_PATH) runAndCompileNasm
 	@$(INTERMID_REPR_BUILD_PATH)/nasmCodeProg
+
+runMyAsm:
+	@make -C $(INTERMID_REPR_PATH) runMyAsm
 
 # -------------------------   HELPER TARGETS   ---------------------------
 

@@ -37,8 +37,9 @@ static GenMyCustomAsmErrors addMyAsmCommandStrRepr2file(
     switch (command.commandType) {
         case   PUSH_NUM_INTERMID_REPR_CMD: ADD_COMMAND(" %.3f\n", doubleNumber); break;
         case       CALL_INTERMID_REPR_CMD: ADD_COMMAND(" function_%s:\n",  functionName); break;
-        case   PUSH_VAR_INTERMID_REPR_CMD: fprintf(file, "%s [BX + %d]\n", strRepr, -(command.argument.variableInd + 1)); break;
-        case    POP_VAR_INTERMID_REPR_CMD: fprintf(file, "%s  [BX + %d]\n", strRepr, -(command.argument.variableInd + 1)); break;
+        case   PUSH_VAR_INTERMID_REPR_CMD: fprintf(file, "push [BX + %d]\n", -(command.argument.variableInd + 1)); break;
+        case  PARAM_OUT_INTERMID_REPR_CMD:
+        case    POP_VAR_INTERMID_REPR_CMD: fprintf(file, "pop  [BX + %d]\n", -(command.argument.variableInd + 1)); break;
         case UNCOND_JMP_INTERMID_REPR_CMD:
         case  IF_EQ_JMP_INTERMID_REPR_CMD:
             fprintf(file, "%s %s:\n", strRepr, getLabelNameById(funcRepr, command.argument.jumpDestLabelInd));
@@ -79,7 +80,7 @@ static GenMyCustomAsmErrors addFunctionMyAsmCodeToFile(
 
     // create safety label to avoid going into function's code without it's call
     fprintf(file, "jmp %sSafetyLabel:\n", funcRepr->functionName);
-    fprintf(file, "%s:\n",                funcRepr->functionName);
+    fprintf(file, "function_%s:\n",                funcRepr->functionName);
 
     const size_t MAX_DEPTH_IN_BLOCKS_OF_CODE             = 50;
     char         tabsBuffer[MAX_DEPTH_IN_BLOCKS_OF_CODE] = {};
@@ -103,7 +104,7 @@ static GenMyCustomAsmErrors addFunctionMyAsmCodeToFile(
     fprintf(file, "%sSafetyLabel:\n\n", funcRepr->functionName);
     // TODO: main to const or variable
     if (strcmp(funcRepr->functionName, "main") == 0) {
-        fprintf(file, "call main:\n");
+        fprintf(file, "call function_main:\n");
     }
 
     return GEN_MY_CUSTOM_ASM_STATUS_OK;
@@ -112,7 +113,19 @@ static GenMyCustomAsmErrors addFunctionMyAsmCodeToFile(
 
 
 
+
+
+
+
+
+
 //  ---------------------------     NASM        ------------------------
+
+
+
+
+
+
 
 
 
@@ -167,7 +180,7 @@ static GenMyCustomAsmErrors addNasmCommandStrRepr2file(
         ADD_LINE_IMPL("\n");
 
     #define COMMON_MUL_OR_DIV_CODE(commandName)        \
-        ADD_LINE_IMPL("pop rbx\n");                    \
+            ADD_LINE_IMPL("pop rbx\n");                    \
         ADD_TAB_LINE_IMPL("pop rax\n");                \
         ADD_TAB_LINE_IMPL(commandName " rbx\n");       \
         ADD_TAB_LINE_IMPL("push rax\n");               \
@@ -215,6 +228,7 @@ static GenMyCustomAsmErrors addNasmCommandStrRepr2file(
             break;
         case ADD_INTERMID_REPR_CMD:              COMMON_BIN_OP_CODE("add ");    break;
         case SUB_INTERMID_REPR_CMD:              COMMON_BIN_OP_CODE("sub ");    break;
+        case  OR_INTERMID_REPR_CMD:              COMMON_BIN_OP_CODE("or ");     break;
         case MUL_INTERMID_REPR_CMD:              COMMON_MUL_OR_DIV_CODE("mul"); break;
         case DIV_INTERMID_REPR_CMD:              COMMON_MUL_OR_DIV_CODE("div"); break;
         case IS_GREATER_OR_EQ_INTERMID_REPR_CMD: COMMON_CMP_DEF_CODE("ge");     break;
@@ -232,7 +246,8 @@ static GenMyCustomAsmErrors addNasmCommandStrRepr2file(
             break;
         case           RETURN_INTERMID_REPR_CMD:
             if (isMain) {
-                    ADD_LINE_IMPL("call myHaltFunction\n");
+                        ADD_LINE_IMPL("push rax\n"); // restore saved exit code from main
+                    ADD_TAB_LINE_IMPL("call myHaltFunction\n");
             } else {
                     ADD_LINE_IMPL("pop  rbx\n"); // save return address
                      ADD_TAB_LINE("add  rsp, %d\n", funcRepr->numOfArguments * 8);
@@ -269,6 +284,7 @@ static GenMyCustomAsmErrors addFunctionNasmCodeToFile(
     while (elemPtr != NULL) {
         // clear tabs buffer
         memset(tabsBuffer, 0, MAX_DEPTH_IN_BLOCKS_OF_CODE * sizeof(char));
+        assert(elemPtr->depthInBlocksOfCode <= MAX_DEPTH_IN_BLOCKS_OF_CODE);
         for (size_t i = 0; i < elemPtr->depthInBlocksOfCode; ++i)
             tabsBuffer[i] = '\t';
 
