@@ -2,7 +2,7 @@
 
 ## 1. Annotation
 
-**Goal of the lab**: write custom programming language and compiler that transforms source code into NASM assembly language[<sup>[1]</sup>](#reference-1) or into custom made assembler for my other project: processor emulator[<sup>[2]</sup>](#reference-2). At the moment, only transform into NASM will be discussed as it's more interesting and was more complicated to implement.
+**Goal of the lab**: write custom programming language and compiler that transforms source code into NASM assembly language[<sup>[1]</sup>](#reference-1) or into custom made assembler for my other project: processor emulator[<sup>[2]</sup>](#reference-2). At the moment, we will only discuss transforming into NASM as it is more interesting and more complicated to implement.
 
 ## 2. Theory.
 
@@ -90,11 +90,11 @@ Also, it's important to know how to turn list of those lexemes into something us
 
 It would be really helpful, if you knew a little bit of assembly, as we will be working with it later in the text [<sup>[5]</sup>](#reference-5).
 
-It's important to understand, that assembly language is completely different from any other language, as it's a low-level programming language, so it almost doesn't have any abstractions. For example, there are no while or for loops, if statements, arrays, structures, input and output functions. Instead you have to declare sequences of bytes directly in memory all by yourself, create labels and jumps to imitate ifs and loops, make syscalls (system calls) to your operating system in order to input/output data or halt the program.
+<!-- It's important to understand, that assembly language is completely different from any other language, as it's a low-level programming language, so it almost doesn't have any abstractions. For example, there are no while or for loops, if statements, arrays, structures, input and output functions. Instead you have to declare sequences of bytes directly in memory all by yourself, create labels and jumps to imitate ifs and loops, make syscalls (system calls) to your operating system in order to input/output data or halt the program.
 
 Also it's very difficult to debug and develop your code, because even small and simple programs tend to have huge assembly code. In addition, it's almost impossible to use debug-output (debug-logging or debug-printing) technique, which is really inconvenient. More over, assembly is even more dangerous than C language, as it's very easy to get access to unprotected memory or to make some syscall that can do nasty things to your system.
 
-On the other hand, a low level allows you to have more control and speed for your program.
+On the other hand, a low level allows you to have more control and speed for your program. -->
 
 ### 2.4 Other
 
@@ -330,11 +330,14 @@ REQUIRE_LEXEM(KEYWORD_INT_LEXEM);
 
 #### 4.3.2 Syntax tree dumper
 
-<details>
+<!-- <details>
 <summary>AST example for fibonacci function</summary>
 
 ![AST example](images/ASTexample.png)
-</details>
+</details> -->
+
+AST example for fibonacci function
+![AST example](images/ASTexample.png)
 
 Each lexeme type is highlighted in it's own color for better visual perception. Also there are different parameters that define what will be shown on the picture:
 
